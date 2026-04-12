@@ -1,5 +1,8 @@
-🌐 Live Demo: https://hollowmanxpy.github.io/DiaTwin/
 # 🧬 DiaTwin: Multi-LLM Diabetes Digital Twin Platform
+
+> 🌐 **Live Demo:** [https://hollowmanxpy.github.io/DiaTwin/](https://hollowmanxpy.github.io/DiaTwin/)
+
+---
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.9%2B-green.svg)
