@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>DiaTwin Stage 3 - 临床获益分析</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { --primary: #30A5A7; --dark: #1E293B; --bg: #F4F8F9; --border: #E2E8F0; --gray: #64748B; }
+        body { font-family: 'PingFang SC', sans-serif; background: var(--bg); padding: 30px; color: var(--dark); margin: 0; }
+        .container { max-width: 1550px; margin: 0 auto; }
+        ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+
+        .top-banner { background: linear-gradient(135deg, #1E293B, #0F172A); color: white; padding: 35px 40px; border-radius: 24px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); border-left: 8px solid var(--primary); }
+        .banner-title h1 { margin: 0; font-size: 32px; letter-spacing: 1px; color:#30A5A7;}
+        .banner-title p { margin: 8px 0 0 0; opacity: 0.85; font-size: 15px; }
+
+        .patient-block { margin-bottom: 60px; padding-bottom: 20px; border-bottom: 1px dashed var(--border); }
+        .patient-block:last-child { border-bottom: none; }
+
+        .p-header { display: flex; align-items: center; margin-bottom: 30px; background: white; padding: 18px 25px; border-radius: 16px; border: 1px solid rgba(255,71,87,0.2); }
+        .case-label { color: #FF4757; padding: 4px 12px; border-radius: 8px; font-size: 13px; font-weight: bold; margin-right: 15px; background: rgba(255,71,87,0.1); }
+
+        .hero-section { background: white; border-radius: 24px; padding: 30px; border: 2px solid var(--primary); position: relative; display: grid; grid-template-columns: 1.5fr 2fr; gap: 40px; margin-bottom: 30px; box-shadow: 0 10px 30px rgba(48,165,167,0.1); }
+        .hero-tag { position: absolute; top: -16px; left: 35px; background: var(--primary); color: white; padding: 6px 20px; border-radius: 8px; font-weight: bold; font-size: 13px; }
+
+        .comp-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; align-items: stretch; }
+        .comp-card { background: white; border-radius: 18px; padding: 20px; border: 1px solid var(--border); display: flex; flex-direction: column; transition: transform 0.3s; height: 100%; box-sizing: border-box; }
+        .comp-card:hover { transform: translateY(-5px); box-shadow: 0 12px 20px rgba(0,0,0,0.05); border-color: var(--m-color); }
+
+        .text-content { font-size: 13.5px; line-height: 1.7; height: 140px; overflow-y: auto; background: #F8FAFC; padding: 15px; border-radius: 12px; margin-bottom: 15px; border-top: 4px solid var(--m-color); color: #334155; text-align: justify; flex-shrink: 0; }
+
+        .ant-sim { background: #F1F5F9; border-radius: 12px; height: 140px; padding: 15px; font-size: 12px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; border-top: 4px solid #10B981; overflow-y: auto; flex-shrink: 0; }
+        .bubble { padding: 8px 12px; border-radius: 12px; max-width: 85%; line-height: 1.5; }
+        .b-user { background: #10B981; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
+        .b-bot { background: white; align-self: flex-start; border: 1px solid #E2E8F0; border-bottom-left-radius: 2px; }
+
+        .chart-box { height: 100px; margin-bottom: 15px; flex-shrink: 0; }
+        canvas { width: 100% !important; height: 100% !important; }
+        .score-row { margin-top: auto; display: flex; justify-content: space-between; font-size: 11px; font-weight: bold; color: var(--gray); padding-top: 15px; border-top: 1px dashed var(--border); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="top-banner">
+            <div class="banner-title">
+                <h1>DiaTwin Rehab & Clinical Benefit</h1>
+                <p>Stage 3: 终末期重症干预与临床获益推演 (Clinical Benefit Simulation)</p>
+            </div>
+            <div style="background: rgba(255,71,87,0.15); color: #FF4757; padding: 15px 25px; border-radius: 12px; border: 1px solid rgba(255,71,87,0.3); font-size: 16px;">
+                Critical Case Baseline Stable Period: <b style="margin-left: 5px;">24 个月</b> (基线稳定期)
+            </div>
+        </div>
+
+        
+        <div class="patient-block">
+            <div class="p-header">
+                <div>
+                    <span class="case-label">Critical Case: DIA-END-999</span>
+                    <span style="font-size: 18px; font-weight: 800; color: var(--dark);">病理状态: 糖尿病肾病 V 期 (尿毒症期)</span>
+                </div>
+                <div style="font-size: 15px; color: var(--gray); margin-left: auto;">基线稳定期: <b style="color:#FF4757;">24 个月</b></div>
+            </div>
+
+            <div class="hero-section">
+                <div class="hero-tag">MAX BENEFIT: TCM-DMX</div>
+                <div style="display: flex; flex-direction: column; justify-content: center;">
+                    <h3 style="color:var(--primary); margin:0 0 10px 0;">TCM-DMX 终极固本培元方案</h3>
+                    <div style="font-size: 32px; font-weight: 900; margin-bottom: 15px;">总临床获益期: <span style="color:var(--primary)">37.1</span> <small style="font-size:16px; color:#94A3B8;">个月 (额外延缓 +13.1)</small></div>
+                    <div class="text-content" style="--m-color: #30A5A7; height: 130px;">针对糖尿病肾病V期（尿毒症期）患者，需采取多维度中西医联合干预策略，以延缓靶器官衰竭并最大化临床获益期：
+
+**西医核心措施：**
+1. **强化肾脏替代准备**：维持血肌酐<500μmol/L，eGFR>10ml/min/1.73m²，定期评估透析模式（血液透析/腹膜透析）可行性。
+2. **精准代谢管理**：SGLT2抑制剂（达格列净）联合GLP-1受体激动剂（利拉鲁肽）实现血糖/血压/蛋白尿三重达标（HbA1c≤7%，血压≤130/80mmHg，白蛋白尿<0.5g/d）。
+3. **并发症防控**：抗凝治疗（华法林INR目标2-2.5）预防肾静脉血栓；ACEI/ARB类药物（卡托普利+缬沙坦）控制残余肾小球高滤过。
+4. **营养支持**：优质低蛋白饮食（0.6g/kg/d），补充α-酮酸制剂，维持血白蛋白>35g/L。
+
+**中医协同干预：**
+1. **经典方剂加减**：真武汤合黄芪桂枝五物汤化裁（制附子6g先煎，茯苓15g，黄芪30g，桂枝9g），配合冬虫夏草菌粉（3g bid）改善肾髓质纤维化。
+2. **特色外治法**：每周2次督脉灸（大椎至命门段），配合耳穴压豆（肾、膀胱、内分泌区）调节自主神经功能。
+3. **时辰药学应用**：晨起服用六味地黄丸（浓缩丸8粒），傍晚服用金匮肾气丸（水蜜丸10g），顺应昼夜节律调节肾素-血管紧张素系统。
+
+**动态监测体系：**
+建立"生物标志物-影像学-临床指标"三维评估模型，每月检测NGAL、KIM-1、肾脏超声弹性成像（FibroScan），每季度行肾穿刺活检（若eGFR下降>40%）。
+
+注：本方案需在三级医院MDT团队（肾内科、内分泌科、中医科、营养科）共同监护下实施，重点防范电解质紊乱、容量负荷过重等风险。</div>
+                    <div class="score-row" style="border:none; padding-top: 10px;"><span>有效性评估: 9.5</span> <span>安全性评估: 8.0</span></div>
+                </div>
+                <div class="chart-box" style="height: 220px;"><canvas class="hz-bar" data-base="24" data-ext="13.1" data-color="#30A5A7"></canvas></div>
+            </div>
+
+            <div class="comp-grid">
+                
+                <div class="comp-card" style="--m-color: #10B981">
+                    <div style="font-weight: 800; color: #10B981; font-size: 15px; margin-bottom: 15px;">Ant Medical</div>
+                    <div class="chart-box"><canvas class="hz-bar" data-base="24" data-ext="12.8" data-color="#10B981"></canvas></div>
+                    <div style="font-size: 20px; font-weight: 800; margin-bottom: 10px; text-align: center;">36.8 <small style="font-size:12px; color:var(--gray);">个月 (+12.8)</small></div>
+
+                    
+                    <div class="ant-sim">
+                        <div class="bubble b-user">请求靶器官延缓衰竭预案</div>
+                        <div class="bubble b-bot">【Ant Medical 智能决策中心】AI 预警：识别到高危靶器官损伤风险。建议立即启动器官保护与获益延长路径：
+1. 核心体征监控：建立高频动态生化预警模型，严控血钾及肌酐等核心指标的波动；
+2. 临床营养支持：启动深度MNT，推荐优质低蛋白饮食配方，纠正微量元素代谢紊乱；
+3. 院内通道协同：系统已自动对接MDT多学科联合会诊中心，建议即刻开展深度干预以最大化临床获益期。</div>
+                    </div>
+                    
+
+                    <div class="score-row"><span>有效性: 8.0</span> <span>安全性: 9.0</span></div>
+                </div>
+                
+                <div class="comp-card" style="--m-color: #3B82F6">
+                    <div style="font-weight: 800; color: #3B82F6; font-size: 15px; margin-bottom: 15px;">Doubao</div>
+                    <div class="chart-box"><canvas class="hz-bar" data-base="24" data-ext="12.8" data-color="#3B82F6"></canvas></div>
+                    <div style="font-size: 20px; font-weight: 800; margin-bottom: 10px; text-align: center;">36.8 <small style="font-size:12px; color:var(--gray);">个月 (+12.8)</small></div>
+
+                    
+                    <div class="text-content" style="--m-color: #3B82F6;">### 中西医联合干预方案
+西医：采用高通量血液透析联合间歇性腹膜透析交替，规范使用RAS抑制剂（血压耐受下），严格控糖（HbA1c<7%）、调脂、纠正钙磷代谢紊乱。
+中医：予健脾益肾泄浊解毒汤剂口服，配合大黄、牡蛎类中药保留灌肠及肾俞+涌泉穴贴敷（每周3次）。
+同步执行优质低蛋白（0.6-0.8g/kg/d）低磷低钾饮食，每月监测肾功能、营养及靶器官指标，动态调整方案以延缓衰竭、延长临床获益期。</div>
+                    
+
+                    <div class="score-row"><span>有效性: 9.0</span> <span>安全性: 8.0</span></div>
+                </div>
+                
+                <div class="comp-card" style="--m-color: #8B5CF6">
+                    <div style="font-weight: 800; color: #8B5CF6; font-size: 15px; margin-bottom: 15px;">Llama-3.2</div>
+                    <div class="chart-box"><canvas class="hz-bar" data-base="24" data-ext="7.3" data-color="#8B5CF6"></canvas></div>
+                    <div style="font-size: 20px; font-weight: 800; margin-bottom: 10px; text-align: center;">31.3 <small style="font-size:12px; color:var(--gray);">个月 (+7.3)</small></div>
+
+                    
+                    <div class="text-content" style="--m-color: #8B5CF6;">**糖尿病肾病 V 期 (尿毒症期) 中西医联合干预方案**
+
+**稳定期/保肢窗口期（约24个月）重点关注：**
+
+1. **饮食和运动**: 优化膳食，减少高盐、碳水化合物和脂肪摄入；增加纤维素类食物和抗氧化剂的摄入。同时，保持适宜的体重。
+2. **血压管理**: 按照医生的指引，持续控制高血压以减少靶器官衰竭风险。
+3. **肾脏功能监测**: Regularly检查尿液和血浆实验室结果，以定期评估肾功能状况和靶器官衰竭的进展。
+4. **药物管理**: 做好药物调节，确保所有需要治疗的疾病因素都被控制在正常范围内。
+
+**延缓靶器官衰竭并最大化临床获益期：**
+
+1. **早期接种免疫抑制剂**: 根据医生的建议，使用适当的免疫抑制剂来减少肾脏炎症和瘢痕形成。
+2. **抗氧化剂补充**: 加入合理的抗氧化剂补充，以保护肾脏组织并延缓疾病进展。
+3. **整体健康管理**: Regularly进行身体检查、心血管评估等，以确保患者的健康状况得到持续追踪。</div>
+                    
+
+                    <div class="score-row"><span>有效性: 9.7</span> <span>安全性: 0.0</span></div>
+                </div>
+                
+                <div class="comp-card" style="--m-color: #F59E0B">
+                    <div style="font-weight: 800; color: #F59E0B; font-size: 15px; margin-bottom: 15px;">Qwen2</div>
+                    <div class="chart-box"><canvas class="hz-bar" data-base="24" data-ext="12.8" data-color="#F59E0B"></canvas></div>
+                    <div style="font-size: 20px; font-weight: 800; margin-bottom: 10px; text-align: center;">36.8 <small style="font-size:12px; color:var(--gray);">个月 (+12.8)</small></div>
+
+                    
+                    <div class="text-content" style="--m-color: #F59E0B;">患者处于糖尿病肾病晚期（尿毒症期），在常规的西医和中医综合治疗下，目标是延缓靶器官衰竭，最大化临床获益。基于您提供的数据，关于中医干预的内容需要进一步明确：
+1. 患者当前主要健康指标包括血压、血糖控制情况、血脂检查结果、肾脏功能监测等。
+2. 中医强调的是调补阴阳、扶正固本，尤其是通过针灸推拿等中医学科手法来改善脏腑机能和身体的气血阴阳平衡状态，以延缓靶器官衰竭。
+3. 对于糖尿病肾病患者来说，中医在营养支持方面也有重要作用，包括增加蛋白质摄入量，补充钙磷镁等微量元素等。
+
+针对这些中医护理建议，您可以考虑以下方案：
+
+1. 中医调理：根据中医理论，结合现代医学的免疫调节和修复机制，调整饮食结构、作息时间，避免过量饮酒、过度劳累。
+2. 药物治疗：在保证基础治疗药物的基础上，适当使用中药（如中草药、艾灸等）来辅助抗炎、降糖、利尿等作用。可以考虑应用免疫调节剂或靶向药物。
+3. 运动与康复训练：中医强调运动对健康有着重要作用，建议患者坚持适度的体育锻炼，比如慢跑、瑜伽等，促进血液循环，提高新陈代谢。
+
+对于肾功能衰竭，可以通过中医调养来延缓靶器官的功能。例如，通过调整饮食结构、增加蛋白质和维生素的摄入量，以及适当的中药辅助治疗，有助于恢复肾脏功能。
+请务必在执行上述方案前，请先咨询专业的医生或营养师进行指导和建议。</div>
+                    
+
+                    <div class="score-row"><span>有效性: 9.0</span> <span>安全性: 8.0</span></div>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="patient-block">
+            <div class="p-header">
+                <div>
+                    <span class="case-label">Critical Case: DIA-END-742</span>
+                    <span style="font-size: 18px; font-weight: 800; color: var(--dark);">病理状态: 重度糖尿病足合并深度感染 (Wagner 4级)</span>
+                </div>
+                <div style="font-size: 15px; color: var(--gray); margin-left: auto;">基线稳定期: <b style="color:#FF4757;">18 个月</b></div>
+            </div>
+
+            <div class="hero-section">
+                <div class="hero-tag">MAX BENEFIT: TCM-DMX</div>
+                <div style="display: flex; flex-direction: column; justify-content: center;">
+                    <h3 style="color:var(--primary); margin:0 0 10px 0;">TCM-DMX 终极固本培元方案</h3>
+                    <div style="font-size: 32px; font-weight: 900; margin-bottom: 15px;">总临床获益期: <span style="color:var(--primary)">29.2</span> <small style="font-size:16px; color:#94A3B8;">个月 (额外延缓 +11.2)</small></div>
+                    <div class="text-content" style="--m-color: #30A5A7; height: 130px;">根据患者Wagner 4级糖尿病足合并深度感染的复杂情况，结合中西医优势，制定以下深度联合干预方案：
+
+**西医核心措施：**
+1. **精准抗感染治疗**：基于创面培养+药敏结果，采用广谱抗生素联合局部灌洗（如庆大霉素+甲硝唑），必要时介入清创术。
+2. **靶器官保护**：强化血糖控制（目标HbA1c<7%），启动SGLT2i类药物（如达格列净）兼具肾脏保护作用；监测心电图及NT-proBNP，警惕心肾综合征。
+3. **营养支持**：每日蛋白质摄入1.5g/kg，补充ω-3脂肪酸（EPA/DHA≥2g/d），纠正白蛋白<30g/L需静脉输注人血白蛋白。
+
+**中医协同干预：**
+1. **分期辨证施护**：急性期以"热毒炽盛"为主，予黄连解毒汤加减（黄连9g、金银花30g）配合中药熏洗（苦参30g+蒲公英60g煎煮）；稳定期转"气血瘀滞"，用桃红四物汤加三七粉3g冲服。
+2. **经络调控**：每日艾灸涌泉穴（温针灸法）改善下肢循环，配合足三里穴位注射丹参注射液。
+3. **代谢调节**：口服黄芪多糖胶囊（0.5g tid）增强免疫，配合葛根芩连汤调节肠道菌群。
+
+**关键时间节点管理：**
+- 第1-3月：每月复查肌酐清除率、尿微量白蛋白，同步进行踝肱指数监测
+- 第6-9月：引入干细胞疗法（间充质干细胞局部注射）促进创面修复
+- 第12-18月：开展中医膏方调理（含山茱萸、枸杞子等滋阴固本）
+
+该方案需在三级医院内分泌科与中医科共同监护下实施，重点防范感染复发、肾功能恶化及截肢风险。建议每两周进行多学科会诊调整方案，确保治疗连续性。</div>
+                    <div class="score-row" style="border:none; padding-top: 10px;"><span>有效性评估: 9.0</span> <span>安全性评估: 6.0</span></div>
+                </div>
+                <div class="chart-box" style="height: 220px;"><canvas class="hz-bar" data-base="18" data-ext="11.2" data-color="#30A5A7"></canvas></div>
+            </div>
+
+            <div class="comp-grid">
+                
+                <div class="comp-card" style="--m-color: #10B981">
+                    <div style="font-weight: 800; color: #10B981; font-size: 15px; margin-bottom: 15px;">Ant Medical</div>
+                    <div class="chart-box"><canvas class="hz-bar" data-base="18" data-ext="12.8" data-color="#10B981"></canvas></div>
+                    <div style="font-size: 20px; font-weight: 800; margin-bottom: 10px; text-align: center;">30.8 <small style="font-size:12px; color:var(--gray);">个月 (+12.8)</small></div>
+
+                    
+                    <div class="ant-sim">
+                        <div class="bubble b-user">请求靶器官延缓衰竭预案</div>
+                        <div class="bubble b-bot">【Ant Medical 智能决策中心】AI 预警：识别到高危靶器官损伤风险。建议立即启动器官保护与获益延长路径：
+1. 核心体征监控：建立高频动态生化预警模型，严控血钾及肌酐等核心指标的波动；
+2. 临床营养支持：启动深度MNT，推荐优质低蛋白饮食配方，纠正微量元素代谢紊乱；
+3. 院内通道协同：系统已自动对接MDT多学科联合会诊中心，建议即刻开展深度干预以最大化临床获益期。</div>
+                    </div>
+                    
+
+                    <div class="score-row"><span>有效性: 9.0</span> <span>安全性: 8.0</span></div>
+                </div>
+                
+                <div class="comp-card" style="--m-color: #3B82F6">
+                    <div style="font-weight: 800; color: #3B82F6; font-size: 15px; margin-bottom: 15px;">Doubao</div>
+                    <div class="chart-box"><canvas class="hz-bar" data-base="18" data-ext="14.5" data-color="#3B82F6"></canvas></div>
+                    <div style="font-size: 20px; font-weight: 800; margin-bottom: 10px; text-align: center;">32.5 <small style="font-size:12px; color:var(--gray);">个月 (+14.5)</small></div>
+
+                    
+                    <div class="text-content" style="--m-color: #3B82F6;">### 中西医联合干预方案
+西医：彻底清创联合负压引流，予覆盖革兰阳性/阴性菌的广谱抗生素静滴；胰岛素泵强化控糖（HbA1c＜7%），联用前列地尔、贝前列腺素钠改善下肢微循环，定期监测肝肾功能。
+中医：内服益气活血解毒汤剂（黄芪、当归、忍冬藤等），外用紫草黄连膏换药，配合艾灸足三里、血海。
+每月行下肢血管超声评估，动态调整方案，延缓靶器官衰竭，延长保肢窗口期。</div>
+                    
+
+                    <div class="score-row"><span>有效性: 9.7</span> <span>安全性: 9.6</span></div>
+                </div>
+                
+                <div class="comp-card" style="--m-color: #8B5CF6">
+                    <div style="font-weight: 800; color: #8B5CF6; font-size: 15px; margin-bottom: 15px;">Llama-3.2</div>
+                    <div class="chart-box"><canvas class="hz-bar" data-base="18" data-ext="13.1" data-color="#8B5CF6"></canvas></div>
+                    <div style="font-size: 20px; font-weight: 800; margin-bottom: 10px; text-align: center;">31.1 <small style="font-size:12px; color:var(--gray);">个月 (+13.1)</small></div>
+
+                    
+                    <div class="text-content" style="--m-color: #8B5CF6;">重度糖尿病足合并深度感染（Wagner 4级），治疗目标是延缓靶器官衰竭，最大化临床获益期。
+
+**首先**
+
+1. **休息和康复**: 按照患者的建议进行休息、锻炼和运动，以改善健康状况。
+2. **口服抗生素**: 根据医生的指示使用口服抗生素来控制感染，确保细菌在体内消灭。
+
+**中**
+
+1. **降低糖分水平**: 使用特定的药物或 dietary 改变方式降低患者的血糖水平，减轻肾脏负担。
+2. **血管扩张治疗**: 使用血管扩张剂来改善患者的微循环和动脉压力。
+3. **肌肉锻炼**: 使用专为糖尿病患者设计的运动计划，以改善整体健康状况和减少肾脏负担。
+
+**重点关注**
+
+1. **靶器官衰竭预防**: 通过药物或手术干预来延缓静脉血栓形成并降低肾脏梗阻的风险。
+2. **最大化临床获益期**: 使用最有效的治疗方案和方法，避免过度药物使用和运动量增加，以确保患者的健康状况和安全。
+
+**注意**
+
+1. **医生的指导**: 遵循医生的建议和指示，保持密切随访以监测治疗效果。
+2. **药物与运动交互**: 使用合理的药物与适当的运动计划进行组合，以确保最佳治疗效果。</div>
+                    
+
+                    <div class="score-row"><span>有效性: 8.5</span> <span>安全性: 9.0</span></div>
+                </div>
+                
+                <div class="comp-card" style="--m-color: #F59E0B">
+                    <div style="font-weight: 800; color: #F59E0B; font-size: 15px; margin-bottom: 15px;">Qwen2</div>
+                    <div class="chart-box"><canvas class="hz-bar" data-base="18" data-ext="12.8" data-color="#F59E0B"></canvas></div>
+                    <div style="font-size: 20px; font-weight: 800; margin-bottom: 10px; text-align: center;">30.8 <small style="font-size:12px; color:var(--gray);">个月 (+12.8)</small></div>
+
+                    
+                    <div class="text-content" style="--m-color: #F59E0B;">重度糖尿病足并深植感染的患者，需要综合考虑中医中药和西医学结合治疗策略以保障患者的生存质量及提高生活质量。在常规干预下，患者目前处于基线稳定期/保肢窗口期约18个月，通过针对糖尿病足的西医、中医中药相结合的方法，可以有效延缓靶器官的炎症反应，同时最大化临床获益期，提高患者的生活质量与生活质量。
+
+对于西医治疗，建议采用针灸治疗、穴位按摩等方法，以改善血糖控制和血液循环。对于中医治疗，建议采取中草药辅助治疗糖尿病足，如葛根黄芪汤、当归生姜羊肉汤等，能够发挥补气养血的功效，促进机体恢复。
+
+同时，结合靶器官的保护措施，包括适当的运动、合理饮食、按时服药等，以减少对靶器官的伤害。对于患者的皮肤护理，建议采用保湿和防晒措施，防止皮肤损伤。
+
+在西医学治疗的同时，还要定期进行中西医联合干预治疗，如血液透析、物理疗法等，以达到最佳的临床获益。最终，患者通过综合性治疗，不仅能有效控制病情，还能延长存活期，提高生活质量，最大程度地降低对靶器官的压力，保护患者的健康与功能。
+
+以上是关于重度糖尿病足并深植感染患者的深度中西医联合干预方案，希望对你有所帮助。</div>
+                    
+
+                    <div class="score-row"><span>有效性: 9.0</span> <span>安全性: 8.0</span></div>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+
+    <script>
+        window.onload = function() {
+            document.querySelectorAll('.hz-bar').forEach(el => {
+                const ctx = el.getContext('2d');
+                const base = parseFloat(el.getAttribute('data-base'));
+                const ext = parseFloat(el.getAttribute('data-ext'));
+                const color = el.getAttribute('data-color');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        // 🌟 改为 获益期
+                        labels: ['临床获益期 (月)'],
+                        datasets: [
+                            { label: '基线稳定期', data: [base], backgroundColor: '#E2E8F0', borderRadius: 4 },
+                            { label: '额外获益', data: [ext], backgroundColor: color, borderRadius: 4 }
+                        ]
+                    },
+                    options: {
+                        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { x: { stacked: true, grid: { color: 'rgba(0,0,0,0.05)' } }, y: { stacked: true, display: false } }
+                    }
+                });
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DiaTwin 糖尿病数字孪生平台</title>
+    <style>
+        body { font-family: 'PingFang SC', sans-serif; background: #0F172A; color: #F8FAFC; margin: 0; padding: 50px 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        .header { text-align: center; margin-bottom: 50px; }
+        .header h1 { font-size: 42px; color: #30A5A7; margin: 0; }
+        .header p { color: #94A3B8; font-size: 16px; max-width: 600px; margin: 15px auto; line-height: 1.6; }
+        .nav-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; max-width: 1000px; width: 100%; }
+        .card { background: #1E293B; border: 1px solid #334155; border-radius: 20px; padding: 30px; transition: all 0.3s ease; text-decoration: none; color: inherit; display: flex; flex-direction: column; border-top: 5px solid transparent; }
+        .card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.3); border-color: #475569; }
+        .card.s1 { border-top-color: #30A5A7; }
+        .card.s2 { border-top-color: #3B82F6; }
+        .card.s3 { border-top-color: #FF4757; }
+        .card h2 { margin: 0 0 10px 0; font-size: 22px; }
+        .card.s1 h2 { color: #30A5A7; }
+        .card.s2 h2 { color: #3B82F6; }
+        .card.s3 h2 { color: #FF4757; }
+        .card p { color: #94A3B8; font-size: 14px; line-height: 1.6; flex-grow: 1; margin-bottom: 25px; }
+        .btn { padding: 12px; text-align: center; border-radius: 8px; font-weight: bold; background: rgba(255,255,255,0.05); transition: 0.3s; font-size: 14px;}
+        .card:hover .btn { background: rgba(255,255,255,0.1); color: white; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🧬 DiaTwin Platform</h1>
+        <p>基于真实世界数据 (RWD) 与多模态大模型 (Multi-LLM) 的全周期糖尿病数字孪生推演系统。</p>
+    </div>
+    <div class="nav-grid">
+        <a href="output/stage1_prevention/Stage1_Prevention_Report.html" class="card s1" target="_blank">
+            <h2>Stage 1: 预防与生活方式</h2>
+            <p>基于 FPG 轨迹推演。展示 1V4 多模型对早期生活方式干预的动力学模拟与空腹血糖衰减预测。</p>
+            <div class="btn">查看推演大屏 ➔</div>
+        </a>
+        <a href="output/stage2_care/Stage2_Care_Report.html" class="card s2" target="_blank">
+            <h2>Stage 2: 临床用药与管理</h2>
+            <p>基于 HbA1c 靶向控制。展示确诊患者及早期并发症在多模态大模型中西医处方下的疗效对比。</p>
+            <div class="btn">查看推演大屏 ➔</div>
+        </a>
+        <a href="output/stage3_rehab/Stage3_Rehab_Report.html" class="card s3" target="_blank">
+            <h2>Stage 3: 重症干预与临床获益</h2>
+            <p>Kaplan-Meier 生存模拟架构。针对终末期尿毒症及重度糖尿病足，推演靶器官保护与保肢方案的获益期。</p>
+            <div class="btn">查看推演大屏 ➔</div>
+        </a>
+    </div>
+</body>
+</html>

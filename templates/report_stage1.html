@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>DiaTwin Stage 1 - 预防推演</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { --primary: #30A5A7; --dark: #1E293B; --bg: #F4F8F9; --gold: #FFD93D; --accent: #FF4757; }
+        body { font-family: 'PingFang SC', sans-serif; background: var(--bg); padding: 30px; color: var(--dark); margin: 0; }
+        .container { max-width: 1550px; margin: 0 auto; }
+        ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+
+        /* 顶部看板 */
+        .top-banner { background: linear-gradient(135deg, #1E293B, #0F172A); color: white; padding: 35px 40px; border-radius: 24px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); }
+        .stat-item { background: rgba(255,255,255,0.1); padding: 15px 30px; border-radius: 16px; text-align: center; border: 1px solid rgba(255,255,255,0.2); }
+
+        .patient-card { background: white; padding: 35px; border-radius: 30px; margin-bottom: 50px; box-shadow: 0 8px 25px rgba(0,0,0,0.03); }
+        .p-header { display: flex; align-items: center; margin-bottom: 30px; background: #F8FAFC; padding: 18px 25px; border-radius: 16px; border-left: 6px solid var(--primary); }
+
+        /* 核心自研模型 */
+        .hero-section { background: #FFFEF9; border-radius: 24px; padding: 30px; border: 2px solid var(--gold); position: relative; display: grid; grid-template-columns: 1.5fr 2fr; gap: 40px; margin-bottom: 30px; }
+        .hero-tag { position: absolute; top: -16px; left: 35px; background: var(--accent); color: white; padding: 6px 20px; border-radius: 8px; font-weight: bold; font-size: 13px; }
+
+        /* 竞品网格 */
+        .comp-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; align-items: stretch; }
+        .comp-card { background: white; border-radius: 20px; padding: 20px; border: 1px solid #E2E8F0; display: flex; flex-direction: column; transition: transform 0.3s; height: 100%; box-sizing: border-box; }
+        .comp-card:hover { transform: translateY(-5px); box-shadow: 0 12px 20px rgba(0,0,0,0.05); border-color: var(--m-color); }
+
+        /* 🌟 数据高亮展示区 (置于图表上方) */
+        .data-highlight { text-align: center; font-size: 22px; font-weight: 900; margin-bottom: 5px; color: var(--dark); }
+        .data-highlight span { color: var(--m-color); }
+
+        /* 文本和聊天窗口容器 */
+        .text-content { font-size: 13.5px; line-height: 1.7; height: 150px; overflow-y: auto; background: #F8FAFC; padding: 15px; border-radius: 12px; margin-bottom: 15px; border-top: 4px solid var(--m-color); text-align: justify; flex-shrink: 0; }
+
+        .ant-sim { background: #F1F5F9; border-radius: 12px; height: 150px; padding: 15px; font-size: 12px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; border-top: 4px solid #10B981; overflow-y: auto; flex-shrink: 0; }
+        .bubble { padding: 8px 12px; border-radius: 12px; max-width: 85%; line-height: 1.5; }
+        .b-user { background: #10B981; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
+        .b-bot { background: white; align-self: flex-start; border: 1px solid #E2E8F0; border-bottom-left-radius: 2px; }
+
+        .chart-box { height: 120px; margin-bottom: 15px; flex-shrink: 0; }
+        canvas { width: 100% !important; height: 100% !important; }
+        .score-row { margin-top: auto; display: flex; justify-content: space-between; font-size: 11px; font-weight: bold; color: #64748B; padding-top: 15px; border-top: 1px dashed #E2E8F0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="top-banner">
+            <div><h1 style="margin:0; color:#30A5A7;">DiaTwin <span style="color:white">Prevention</span></h1><p style="margin:8px 0 0 0; opacity:0.8;">Stage 1: 生活方式干预与空腹血糖控制推演 (FPG Target)</p></div>
+            <div style="display:flex; gap:20px;">
+                <div class="stat-item">基线 FPG<b style="display:block; font-size:28px; color:#FF4757; margin-top:5px;">{{ stats.avg_base }}</b></div>
+                <div class="stat-item">预测 FPG<b style="display:block; font-size:28px; color:#30A5A7; margin-top:5px;">{{ stats.avg_post }}</b></div>
+            </div>
+        </div>
+
+        {% for p in patients %}
+        <div class="patient-card">
+            <div class="p-header">
+                <span style="background:var(--primary); color:white; padding:4px 12px; border-radius:8px; font-size:13px; font-weight:bold; margin-right:15px;">{{ p.tag }}</span>
+                <span style="font-size: 18px; font-weight: 800; color: var(--dark); margin-right: 30px;">病例: {{ p.patient_id }}</span>
+                <span style="font-size: 15px; color: #64748B;">BMI: <b style="color:var(--dark)">{{ p.bmi }}</b> &nbsp;|&nbsp; 依从性(c): <b style="color:var(--primary)">{{ p.compliance }}</b></span>
+            </div>
+
+            {% set sz = p.llm_results['TCM-DMX'] %}
+            <div class="hero-section">
+                <div class="hero-tag">TEAM CHOICE: TCM-DMX</div>
+                <div style="display: flex; flex-direction: column; justify-content: center;">
+                    <div class="data-highlight" style="--m-color: #30A5A7; text-align: left; font-size: 28px;">
+                        FPG 轨迹: {{ p.base_fpg }} ➔ <span>{{ sz.post_fpg }}</span> <small style="color:#94A3B8; font-size:14px;">mmol/L</small>
+                    </div>
+                    <div class="chart-box" style="height: 160px;">
+                        <canvas class="line-chart" data-traj="{{ sz.traj | join(',') }}" data-min="{{ sz.y_min }}" data-color="#30A5A7" data-hero="true"></canvas>
+                    </div>
+                </div>
+                <div style="display: flex; flex-direction: column;">
+                    <h3 style="color:var(--primary); margin:0 0 10px 0;">TCM-DMX 深度干预处方</h3>
+                    <div class="text-content" style="--m-color: var(--gold); height: 180px; margin-bottom: 0;">{{ sz.prescription }}</div>
+                    <div class="score-row" style="border:none; padding-top:10px;"><span>有效性评估: {{ sz.scores.clinical_accuracy }}</span> <span>安全性评估: {{ sz.scores.safety }}</span></div>
+                </div>
+            </div>
+
+            <div class="comp-grid">
+                {% for name, res in p.llm_results.items() %}
+                {% if name != 'TCM-DMX' %}
+                <div class="comp-card" style="--m-color: {{ res.color }}">
+                    <div style="font-weight: 800; color: {{ res.color }}; font-size: 15px; margin-bottom: 10px;">{{ name }}</div>
+
+                    <div class="data-highlight" style="--m-color: {{ res.color }};">
+                        {{ p.base_fpg }} ➔ <span>{{ res.post_fpg }}</span>
+                    </div>
+
+                    <div class="chart-box">
+                        <canvas class="line-chart" data-traj="{{ res.traj | join(',') }}" data-min="{{ res.y_min }}" data-color="{{ res.color }}" data-hero="false"></canvas>
+                    </div>
+
+                    {% if name == 'Ant Medical' %}
+                    <div class="ant-sim">
+                        <div class="bubble b-user">请求临床预防建议</div>
+                        <div class="bubble b-bot">{{ res.prescription }}</div>
+                    </div>
+                    {% else %}
+                    <div class="text-content" style="--m-color: {{ res.color }};">{{ res.prescription }}</div>
+                    {% endif %}
+
+                    <div class="score-row"><span>有效性: {{ res.scores.clinical_accuracy }}</span> <span>安全性: {{ res.scores.safety }}</span></div>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        window.onload = function() {
+            document.querySelectorAll('.line-chart').forEach(function(el) {
+                var ctx = el.getContext('2d');
+                var traj = el.getAttribute('data-traj').split(',').map(Number);
+                var yMin = parseFloat(el.getAttribute('data-min'));
+                var color = el.getAttribute('data-color');
+                var isHero = el.getAttribute('data-hero') === 'true';
+
+                var gradient = ctx.createLinearGradient(0, 0, 0, 160);
+                gradient.addColorStop(0, color + (isHero ? '40' : '20'));
+                gradient.addColorStop(1, color + '00');
+
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['D0', 'D7', 'D14', 'D28'],
+                        datasets: [{
+                            data: traj, borderColor: color, borderWidth: isHero ? 4 : 2,
+                            tension: 0.35, fill: true, backgroundColor: gradient,
+                            pointBackgroundColor: '#fff', pointBorderColor: color,
+                            pointBorderWidth: 2, pointRadius: isHero ? 4 : 2
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { display: true, min: yMin, grid: { color: 'rgba(0,0,0,0.04)', drawBorder: false }, ticks: { font: { size: 10 } } },
+                            x: { grid: { display: false }, ticks: { font: { size: 11, weight: 'bold' } } }
+                        }
+                    }
+                });
+            });
+        }
+    </script>
+</body>
+</html>

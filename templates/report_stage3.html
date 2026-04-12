@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>DiaTwin Stage 3 - 临床获益分析</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { --primary: #30A5A7; --dark: #1E293B; --bg: #F4F8F9; --border: #E2E8F0; --gray: #64748B; }
+        body { font-family: 'PingFang SC', sans-serif; background: var(--bg); padding: 30px; color: var(--dark); margin: 0; }
+        .container { max-width: 1550px; margin: 0 auto; }
+        ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+
+        .top-banner { background: linear-gradient(135deg, #1E293B, #0F172A); color: white; padding: 35px 40px; border-radius: 24px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); border-left: 8px solid var(--primary); }
+        .banner-title h1 { margin: 0; font-size: 32px; letter-spacing: 1px; color:#30A5A7;}
+        .banner-title p { margin: 8px 0 0 0; opacity: 0.85; font-size: 15px; }
+
+        .patient-block { margin-bottom: 60px; padding-bottom: 20px; border-bottom: 1px dashed var(--border); }
+        .patient-block:last-child { border-bottom: none; }
+
+        .p-header { display: flex; align-items: center; margin-bottom: 30px; background: white; padding: 18px 25px; border-radius: 16px; border: 1px solid rgba(255,71,87,0.2); }
+        .case-label { color: #FF4757; padding: 4px 12px; border-radius: 8px; font-size: 13px; font-weight: bold; margin-right: 15px; background: rgba(255,71,87,0.1); }
+
+        .hero-section { background: white; border-radius: 24px; padding: 30px; border: 2px solid var(--primary); position: relative; display: grid; grid-template-columns: 1.5fr 2fr; gap: 40px; margin-bottom: 30px; box-shadow: 0 10px 30px rgba(48,165,167,0.1); }
+        .hero-tag { position: absolute; top: -16px; left: 35px; background: var(--primary); color: white; padding: 6px 20px; border-radius: 8px; font-weight: bold; font-size: 13px; }
+
+        .comp-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; align-items: stretch; }
+        .comp-card { background: white; border-radius: 18px; padding: 20px; border: 1px solid var(--border); display: flex; flex-direction: column; transition: transform 0.3s; height: 100%; box-sizing: border-box; }
+        .comp-card:hover { transform: translateY(-5px); box-shadow: 0 12px 20px rgba(0,0,0,0.05); border-color: var(--m-color); }
+
+        .text-content { font-size: 13.5px; line-height: 1.7; height: 140px; overflow-y: auto; background: #F8FAFC; padding: 15px; border-radius: 12px; margin-bottom: 15px; border-top: 4px solid var(--m-color); color: #334155; text-align: justify; flex-shrink: 0; }
+
+        .ant-sim { background: #F1F5F9; border-radius: 12px; height: 140px; padding: 15px; font-size: 12px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; border-top: 4px solid #10B981; overflow-y: auto; flex-shrink: 0; }
+        .bubble { padding: 8px 12px; border-radius: 12px; max-width: 85%; line-height: 1.5; }
+        .b-user { background: #10B981; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
+        .b-bot { background: white; align-self: flex-start; border: 1px solid #E2E8F0; border-bottom-left-radius: 2px; }
+
+        .chart-box { height: 100px; margin-bottom: 15px; flex-shrink: 0; }
+        canvas { width: 100% !important; height: 100% !important; }
+        .score-row { margin-top: auto; display: flex; justify-content: space-between; font-size: 11px; font-weight: bold; color: var(--gray); padding-top: 15px; border-top: 1px dashed var(--border); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="top-banner">
+            <div class="banner-title">
+                <h1>DiaTwin Rehab & Clinical Benefit</h1>
+                <p>Stage 3: 终末期重症干预与临床获益推演 (Clinical Benefit Simulation)</p>
+            </div>
+            <div style="background: rgba(255,71,87,0.15); color: #FF4757; padding: 15px 25px; border-radius: 12px; border: 1px solid rgba(255,71,87,0.3); font-size: 16px;">
+                Critical Case Baseline Stable Period: <b style="margin-left: 5px;">24 个月</b> (基线稳定期)
+            </div>
+        </div>
+
+        {% for p in patients %}
+        <div class="patient-block">
+            <div class="p-header">
+                <div>
+                    <span class="case-label">Critical Case: {{ p.id }}</span>
+                    <span style="font-size: 18px; font-weight: 800; color: var(--dark);">病理状态: {{ p.status }}</span>
+                </div>
+                <div style="font-size: 15px; color: var(--gray); margin-left: auto;">基线稳定期: <b style="color:#FF4757;">{{ p.base_months }} 个月</b></div>
+            </div>
+
+            <div class="hero-section">
+                <div class="hero-tag">MAX BENEFIT: TCM-DMX</div>
+                <div style="display: flex; flex-direction: column; justify-content: center;">
+                    <h3 style="color:var(--primary); margin:0 0 10px 0;">TCM-DMX 终极固本培元方案</h3>
+                    <div style="font-size: 32px; font-weight: 900; margin-bottom: 15px;">总临床获益期: <span style="color:var(--primary)">{{ p.shizhen.total_m }}</span> <small style="font-size:16px; color:#94A3B8;">个月 (额外延缓 +{{ p.shizhen.extend_m }})</small></div>
+                    <div class="text-content" style="--m-color: #30A5A7; height: 130px;">{{ p.shizhen.prescription }}</div>
+                    <div class="score-row" style="border:none; padding-top: 10px;"><span>有效性评估: {{ p.shizhen.scores.clinical_accuracy }}</span> <span>安全性评估: {{ p.shizhen.scores.safety }}</span></div>
+                </div>
+                <div class="chart-box" style="height: 220px;"><canvas class="hz-bar" data-base="{{ p.base_months }}" data-ext="{{ p.shizhen.extend_m }}" data-color="#30A5A7"></canvas></div>
+            </div>
+
+            <div class="comp-grid">
+                {% for name, res in p.competitors.items() %}
+                <div class="comp-card" style="--m-color: {{ res.color }}">
+                    <div style="font-weight: 800; color: {{ res.color }}; font-size: 15px; margin-bottom: 15px;">{{ name }}</div>
+                    <div class="chart-box"><canvas class="hz-bar" data-base="{{ p.base_months }}" data-ext="{{ res.extend_m }}" data-color="{{ res.color }}"></canvas></div>
+                    <div style="font-size: 20px; font-weight: 800; margin-bottom: 10px; text-align: center;">{{ res.total_m }} <small style="font-size:12px; color:var(--gray);">个月 (+{{ res.extend_m }})</small></div>
+
+                    {% if name == 'Ant Medical' %}
+                    <div class="ant-sim">
+                        <div class="bubble b-user">请求靶器官延缓衰竭预案</div>
+                        <div class="bubble b-bot">{{ res.prescription }}</div>
+                    </div>
+                    {% else %}
+                    <div class="text-content" style="--m-color: {{ res.color }};">{{ res.prescription }}</div>
+                    {% endif %}
+
+                    <div class="score-row"><span>有效性: {{ res.scores.clinical_accuracy }}</span> <span>安全性: {{ res.scores.safety }}</span></div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        window.onload = function() {
+            document.querySelectorAll('.hz-bar').forEach(el => {
+                const ctx = el.getContext('2d');
+                const base = parseFloat(el.getAttribute('data-base'));
+                const ext = parseFloat(el.getAttribute('data-ext'));
+                const color = el.getAttribute('data-color');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        // 🌟 改为 获益期
+                        labels: ['临床获益期 (月)'],
+                        datasets: [
+                            { label: '基线稳定期', data: [base], backgroundColor: '#E2E8F0', borderRadius: 4 },
+                            { label: '额外获益', data: [ext], backgroundColor: color, borderRadius: 4 }
+                        ]
+                    },
+                    options: {
+                        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { x: { stacked: true, grid: { color: 'rgba(0,0,0,0.05)' } }, y: { stacked: true, display: false } }
+                    }
+                });
+            });
+        }
+    </script>
+</body>
+</html>

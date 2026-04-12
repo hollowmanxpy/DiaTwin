@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>DiaTwin Stage 2 - 临床诊疗</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { --primary: #30A5A7; --dark: #1E293B; --bg: #F4F8F9; --gold: #FFD93D; --accent: #3B82F6; }
+        body { font-family: 'PingFang SC', sans-serif; background: var(--bg); padding: 30px; color: var(--dark); margin: 0; }
+        .container { max-width: 1550px; margin: 0 auto; }
+        ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+
+        .top-banner { background: linear-gradient(135deg, #1E293B, #0F172A); color: white; padding: 35px 40px; border-radius: 24px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); }
+        .stat-item { background: rgba(255,255,255,0.1); padding: 15px 30px; border-radius: 16px; text-align: center; border: 1px solid rgba(255,255,255,0.2); }
+
+        .patient-card { background: white; padding: 35px; border-radius: 30px; margin-bottom: 50px; box-shadow: 0 8px 25px rgba(0,0,0,0.03); }
+        .p-header { display: flex; align-items: center; margin-bottom: 30px; background: #F8FAFC; padding: 18px 25px; border-radius: 16px; border-left: 6px solid var(--accent); }
+
+        .hero-section { background: #F0F9FF; border-radius: 24px; padding: 30px; border: 2px solid var(--accent); position: relative; display: grid; grid-template-columns: 1.5fr 2fr; gap: 40px; margin-bottom: 30px; }
+        .hero-tag { position: absolute; top: -16px; left: 35px; background: var(--accent); color: white; padding: 6px 20px; border-radius: 8px; font-weight: bold; font-size: 13px; }
+
+        .comp-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; align-items: stretch; }
+        .comp-card { background: white; border-radius: 20px; padding: 20px; border: 1px solid #E2E8F0; display: flex; flex-direction: column; transition: transform 0.3s; height: 100%; box-sizing: border-box;}
+        .comp-card:hover { transform: translateY(-5px); box-shadow: 0 12px 20px rgba(0,0,0,0.05); border-color: var(--m-color); }
+
+        /* 🌟 数据高亮展示区 (置于图表上方) */
+        .data-highlight { text-align: center; font-size: 22px; font-weight: 900; margin-bottom: 5px; color: var(--dark); }
+        .data-highlight span { color: var(--m-color); }
+
+        /* 文本和聊天窗口容器 */
+        .text-content { font-size: 13.5px; line-height: 1.7; height: 150px; overflow-y: auto; background: #F8FAFC; padding: 15px; border-radius: 12px; margin-bottom: 15px; border-top: 4px solid var(--m-color); text-align: justify; flex-shrink: 0; }
+
+        /* 🌟 蚂蚁阿福的聊天 UI */
+        .ant-sim { background: #F1F5F9; border-radius: 12px; height: 150px; padding: 15px; font-size: 12px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; border-top: 4px solid #10B981; overflow-y: auto; flex-shrink: 0; }
+        .bubble { padding: 8px 12px; border-radius: 12px; max-width: 85%; line-height: 1.5; }
+        .b-user { background: #10B981; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
+        .b-bot { background: white; align-self: flex-start; border: 1px solid #E2E8F0; border-bottom-left-radius: 2px; }
+
+        .chart-box { height: 130px; margin-bottom: 15px; flex-shrink: 0; }
+        canvas { width: 100% !important; height: 100% !important; }
+        .score-row { margin-top: auto; display: flex; justify-content: space-between; font-size: 11px; font-weight: bold; color: #64748B; padding-top: 15px; border-top: 1px dashed #E2E8F0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="top-banner">
+            <div><h1 style="margin:0; color:#30A5A7;">DiaTwin <span style="color:white">Care</span></h1><p style="margin:8px 0 0 0; opacity:0.8;">Stage 2: 药物干预与并发症靶向管理 (HbA1c Target)</p></div>
+            <div style="display:flex; gap:20px;">
+                <div class="stat-item">基线 HbA1c<b style="display:block; font-size:28px; color:#FF4757; margin-top:5px;">8.7%</b></div>
+                <div class="stat-item">预测 HbA1c<b style="display:block; font-size:28px; color:#30A5A7; margin-top:5px;">6.8%</b></div>
+            </div>
+        </div>
+
+        
+        <div class="patient-card">
+            <div class="p-header">
+                <span style="font-size: 18px; font-weight: 800; color: var(--dark); margin-right: 30px;">病例: DIA-C-882</span>
+                <span style="font-size: 15px; color: #64748B;">并发症指征: <b style="color:#F59E0B">早期微量白蛋白尿</b> &nbsp;|&nbsp; 依从性(c): <b style="color:var(--accent)">0.75</b></span>
+            </div>
+
+            
+            <div class="hero-section">
+                <div class="hero-tag">CLINICAL CHOICE: TCM-DMX</div>
+                <div style="display: flex; flex-direction: column; justify-content: center;">
+                    <div class="data-highlight" style="--m-color: #30A5A7; text-align: left; font-size: 28px;">
+                        HbA1c: 8.7 ➔ <span>5.8</span> <small style="color:#94A3B8; font-size:14px;">%</small>
+                    </div>
+                    <div class="chart-box" style="height: 160px;">
+                        <canvas class="bar-chart" data-base="8.7" data-post="5.8" data-color="#30A5A7"></canvas>
+                    </div>
+                </div>
+                <div style="display: flex; flex-direction: column;">
+                    <h3 style="color:var(--primary); margin:0 0 10px 0;">TCM-DMX 核心诊疗路径</h3>
+                    <div class="text-content" style="--m-color: #30A5A7; height: 180px; margin-bottom: 0;">根据HbA1c 8.7%及早期微量白蛋白尿，提示糖尿病肾病进展风险，需中西医协同干预：
+
+**西医管理：**
+1. **强化控糖**：目标HbA1c≤7%，首选DPP-4抑制剂（如西格列汀）兼顾肾脏保护；若胰岛素抵抗明显，联用GLP-1受体激动剂（如利拉鲁肽）
+2. **靶向降压**：优选ACEI（如培哚普利）或ARB（如缬沙坦），可降低尿蛋白达50%
+3. **蛋白限制**：每日蛋白摄入0.6-0.8g/kg（优质蛋白为主），配合α-硫辛酸（600mg/日）改善肾小球滤过
+
+**中医调理：**
+1. **经典方剂**：参芪地黄汤加减（生黄芪30g、山茱萸15g、茯苓12g）益气养阴，配合玉米须30g煎水代茶饮
+2. **外治法**：每周2次耳穴贴压（取肾、膀胱、内分泌穴），配合涌泉穴艾灸
+3. **代谢调节**：补充吡啶甲酸铬（500mg/日）改善胰岛素抵抗，辅以针灸足三里、三阴交
+
+**生活管理：**
+- 每周3次抗阻训练（阻力带训练），每次20分钟提升GLP-1分泌
+- 采用地中海饮食模式，重点补充ω-3脂肪酸（每日1.5g EPA+DHA）
+- 每日晨起拍打脾经（血海至三阴交）3分钟，促进水液代谢
+
+注：需每月检测尿微量白蛋白/肌酐比值，每3个月复查肾功能。若尿蛋白持续＞300mg/日，应及时转诊肾病专科。</div>
+                    <div class="score-row" style="border:none; padding-top:10px;"><span>有效性: 9.5</span> <span>安全性: 9.5</span></div>
+                </div>
+            </div>
+
+            <div class="comp-grid">
+                
+                <div class="comp-card" style="--m-color: #10B981">
+                    <div style="font-weight: 800; color: #10B981; font-size: 15px; margin-bottom: 10px;">Ant Medical</div>
+
+                    <div class="data-highlight" style="--m-color: #10B981;">
+                        8.7 ➔ <span>6.0</span> <small style="color:#94A3B8; font-size:12px;">%</small>
+                    </div>
+
+                    <div class="chart-box">
+                        <canvas class="bar-chart" data-base="8.7" data-post="6.0" data-color="#10B981"></canvas>
+                    </div>
+
+                    
+                    <div class="ant-sim">
+                        <div class="bubble b-user">请求用药及并发症管理方案</div>
+                        <div class="bubble b-bot">【Ant Medical 智能决策中心】AI 诊断：患者当前存在显著的糖代谢失衡。建议启动全周期数字化干预：
+1. 动态控糖 (Diet)：采用限制性进食 (TRE) 策略，碳水化合物优选全谷物，日均摄入严格控制；
+2. 运动处方 (Exercise)：建议每周累计至少150分钟有氧运动，目标心率控制在 (220-年龄)×65% 区间；
+3. 闭环监测：即日起接入健康档案，连续打卡动态血糖，若持续异动将自动触发人工介入机制。</div>
+                    </div>
+                    
+
+                    <div class="score-row"><span>有效性: 9.0</span> <span>安全性: 9.0</span></div>
+                </div>
+                
+                <div class="comp-card" style="--m-color: #3B82F6">
+                    <div style="font-weight: 800; color: #3B82F6; font-size: 15px; margin-bottom: 10px;">Doubao</div>
+
+                    <div class="data-highlight" style="--m-color: #3B82F6;">
+                        8.7 ➔ <span>6.1</span> <small style="color:#94A3B8; font-size:12px;">%</small>
+                    </div>
+
+                    <div class="chart-box">
+                        <canvas class="bar-chart" data-base="8.7" data-post="6.1" data-color="#3B82F6"></canvas>
+                    </div>
+
+                    
+                    <div class="text-content" style="--m-color: #3B82F6; height: 150px;">### 西医用药与监测
+二甲双胍联合达格列净，控糖同时减少尿蛋白，目标HbA1c＜7%；监测空腹/餐后血糖、HbA1c及尿微量白蛋白。
+### 中医用药
+予黄葵胶囊清热利湿，或金水宝胶囊益肾补肺，改善早期肾损伤。
+### 生活管理
+低GI饮食，每日盐＜5g，每周150min中等强度运动；每3个月复查HbA1c，每1-2个月查尿微量白蛋白。</div>
+                    
+
+                    <div class="score-row"><span>有效性: 9.0</span> <span>安全性: 8.0</span></div>
+                </div>
+                
+                <div class="comp-card" style="--m-color: #8B5CF6">
+                    <div style="font-weight: 800; color: #8B5CF6; font-size: 15px; margin-bottom: 10px;">Llama-3.2</div>
+
+                    <div class="data-highlight" style="--m-color: #8B5CF6;">
+                        8.7 ➔ <span>6.1</span> <small style="color:#94A3B8; font-size:12px;">%</small>
+                    </div>
+
+                    <div class="chart-box">
+                        <canvas class="bar-chart" data-base="8.7" data-post="6.1" data-color="#8B5CF6"></canvas>
+                    </div>
+
+                    
+                    <div class="text-content" style="--m-color: #8B5CF6; height: 150px;">**患者HbA1c 8.7%**
+
+**中西医联合用药和管理建议：**
+
+1. **降低血糖**: 通过饮食、运动和口服抗酸剂控制高血糖。
+2. **减少微量白蛋白尿**: 加强肾脏护理，降低尿素的产生，并使用过滤器降低微量白蛋白尿。
+3. **控制并发症**: 通过抗高血压药物和心血管疾病管理来减少并发症风险。
+4. **预防并发症**: 继续Monitor患者，定期检查肾功能和血糖水平，及时发现并治疗潜在问题。
+
+**进一步建议：**
+
+1. 与医生进行定期检查和评估。
+2.遵循饮食和运动计划。
+3.使用过滤器降低微量白蛋白尿。
+4.减少高血糖、高酸度和心血管疾病的风险。</div>
+                    
+
+                    <div class="score-row"><span>有效性: 8.5</span> <span>安全性: 9.0</span></div>
+                </div>
+                
+                <div class="comp-card" style="--m-color: #F59E0B">
+                    <div style="font-weight: 800; color: #F59E0B; font-size: 15px; margin-bottom: 10px;">Qwen2</div>
+
+                    <div class="data-highlight" style="--m-color: #F59E0B;">
+                        8.7 ➔ <span>6.0</span> <small style="color:#94A3B8; font-size:12px;">%</small>
+                    </div>
+
+                    <div class="chart-box">
+                        <canvas class="bar-chart" data-base="8.7" data-post="6.0" data-color="#F59E0B"></canvas>
+                    </div>
+
+                    
+                    <div class="text-content" style="--m-color: #F59E0B; height: 150px;">患者HbA1c水平较低（8.7%），伴有早期微量白蛋白尿的症状。对于这种特定情况，中医和西医联合使用可以起到较好的治疗效果。
+
+对于患者的饮食问题，我建议患者以富含优质蛋白质的食物为主，如鸡胸肉、鱼、豆类等，同时控制脂肪的摄入量，避免高糖食物的摄取。对于慢性肾炎患者，应当限制盐分、热量的摄入，以及加强运动。中医方面则可考虑使用汤药（如黑木耳红枣汤）来辅助治疗。
+
+对于药物问题，我会建议您按照医生开具的处方用药。同时，我也会提醒患者要定期监测血糖水平，特别是应该在饮食和生活习惯变化时及时调整。
+
+在管理上，您可以尝试结合中医和西医的治疗方法，以达到最佳疗效。另外，如果病情出现反复或恶化，应及时就医咨询专业人士的建议，以便及时调整治疗方案。
+
+以上是针对患者HbA1c、微量白蛋白尿的情况，希望对您有所帮助。</div>
+                    
+
+                    <div class="score-row"><span>有效性: 9.5</span> <span>安全性: 8.6</span></div>
+                </div>
+                
+            </div>
+        </div>
+        
+        <div class="patient-card">
+            <div class="p-header">
+                <span style="font-size: 18px; font-weight: 800; color: var(--dark); margin-right: 30px;">病例: DIA-C-915</span>
+                <span style="font-size: 15px; color: #64748B;">并发症指征: <b style="color:#F59E0B">周围神经病变 (双足麻木)</b> &nbsp;|&nbsp; 依从性(c): <b style="color:var(--accent)">0.82</b></span>
+            </div>
+
+            
+            <div class="hero-section">
+                <div class="hero-tag">CLINICAL CHOICE: TCM-DMX</div>
+                <div style="display: flex; flex-direction: column; justify-content: center;">
+                    <div class="data-highlight" style="--m-color: #30A5A7; text-align: left; font-size: 28px;">
+                        HbA1c: 9.2 ➔ <span>6.2</span> <small style="color:#94A3B8; font-size:14px;">%</small>
+                    </div>
+                    <div class="chart-box" style="height: 160px;">
+                        <canvas class="bar-chart" data-base="9.2" data-post="6.2" data-color="#30A5A7"></canvas>
+                    </div>
+                </div>
+                <div style="display: flex; flex-direction: column;">
+                    <h3 style="color:var(--primary); margin:0 0 10px 0;">TCM-DMX 核心诊疗路径</h3>
+                    <div class="text-content" style="--m-color: #30A5A7; height: 180px; margin-bottom: 0;">根据HbA1c 9.2%及周围神经病变表现，需中西医协同管理，具体建议如下：
+
+**西医治疗：**
+1. **强化降糖**：调整二甲双胍剂量至2000mg/日（需监测胃肠道反应），联合SGLT2i（如达格列净）改善微循环；若空腹血糖＞13mmol/L，加用DPP-4抑制剂（西格列汀）。
+2. **神经病变干预**：甲钴胺1500μg/日+α-硫辛酸600mg/日营养神经，普瑞巴林75mg bid缓解麻木。
+3. **并发症筛查**：立即查肌电图、尿微量白蛋白、眼底照相，排除自主神经病变。
+
+**中医调理：**
+1. **方剂**：黄芪30g+当归12g+鸡血藤20g+丹参15g+桂枝9g，水煎服每日1剂（益气活血通络）。
+2. **外治**：艾灸足三里、阳陵泉，每日20分钟；睡前生姜水泡脚（水温≤40℃）。
+
+**生活管理：**
+- 低碳水化合物饮食（碳水占比＜45%），每日摄入纤维≥30g。
+- 进行抗阻训练（如弹力带练习）+有氧运动（每周≥150分钟快走）。
+- 戒烟并补充维生素B1/B6。
+
+**监测要求：**
+每日空腹+餐后2小时指尖血糖记录，每月复查HbA1c，神经病变症状加重时立即就诊。
+
+注：以上方案需内分泌科与中医科共同制定，药物相互作用需由医师评估。</div>
+                    <div class="score-row" style="border:none; padding-top:10px;"><span>有效性: 9.0</span> <span>安全性: 9.0</span></div>
+                </div>
+            </div>
+
+            <div class="comp-grid">
+                
+                <div class="comp-card" style="--m-color: #10B981">
+                    <div style="font-weight: 800; color: #10B981; font-size: 15px; margin-bottom: 10px;">Ant Medical</div>
+
+                    <div class="data-highlight" style="--m-color: #10B981;">
+                        9.2 ➔ <span>6.4</span> <small style="color:#94A3B8; font-size:12px;">%</small>
+                    </div>
+
+                    <div class="chart-box">
+                        <canvas class="bar-chart" data-base="9.2" data-post="6.4" data-color="#10B981"></canvas>
+                    </div>
+
+                    
+                    <div class="ant-sim">
+                        <div class="bubble b-user">请求用药及并发症管理方案</div>
+                        <div class="bubble b-bot">【Ant Medical 智能决策中心】AI 诊断：患者当前存在显著的糖代谢失衡。建议启动全周期数字化干预：
+1. 动态控糖 (Diet)：采用限制性进食 (TRE) 策略，碳水化合物优选全谷物，日均摄入严格控制；
+2. 运动处方 (Exercise)：建议每周累计至少150分钟有氧运动，目标心率控制在 (220-年龄)×65% 区间；
+3. 闭环监测：即日起接入健康档案，连续打卡动态血糖，若持续异动将自动触发人工介入机制。</div>
+                    </div>
+                    
+
+                    <div class="score-row"><span>有效性: 8.0</span> <span>安全性: 9.0</span></div>
+                </div>
+                
+                <div class="comp-card" style="--m-color: #3B82F6">
+                    <div style="font-weight: 800; color: #3B82F6; font-size: 15px; margin-bottom: 10px;">Doubao</div>
+
+                    <div class="data-highlight" style="--m-color: #3B82F6;">
+                        9.2 ➔ <span>7.1</span> <small style="color:#94A3B8; font-size:12px;">%</small>
+                    </div>
+
+                    <div class="chart-box">
+                        <canvas class="bar-chart" data-base="9.2" data-post="7.1" data-color="#3B82F6"></canvas>
+                    </div>
+
+                    
+                    <div class="text-content" style="--m-color: #3B82F6; height: 150px;">### 中西医联合干预建议
+西医：予二甲双胍联合阿卡波糖降糖，必要时加用GLP-1受体激动剂，目标HbA1c＜7%；予甲钴胺+依帕司他营养神经、改善糖代谢。
+中医：口服木丹颗粒，配合双足涌泉穴艾灸。
+管理：严格低糖饮食，每日温水泡足后轻柔按摩双足，每周监测2-3次血糖，每月复查神经传导速度，避免足部外伤。</div>
+                    
+
+                    <div class="score-row"><span>有效性: 5.0</span> <span>安全性: 8.0</span></div>
+                </div>
+                
+                <div class="comp-card" style="--m-color: #8B5CF6">
+                    <div style="font-weight: 800; color: #8B5CF6; font-size: 15px; margin-bottom: 10px;">Llama-3.2</div>
+
+                    <div class="data-highlight" style="--m-color: #8B5CF6;">
+                        9.2 ➔ <span>6.0</span> <small style="color:#94A3B8; font-size:12px;">%</small>
+                    </div>
+
+                    <div class="chart-box">
+                        <canvas class="bar-chart" data-base="9.2" data-post="6.0" data-color="#8B5CF6"></canvas>
+                    </div>
+
+                    
+                    <div class="text-content" style="--m-color: #8B5CF6; height: 150px;">HbA1c 9.2%，周围神经病变（双足麻木），提示可能存在葡萄糖控制不良和血管损害。
+
+**中西医联合用药建议**
+
+1. 补充蛋白质食物：改善肌肉蛋白质合成，减少脂肪分解。
+2. 醛醇：降低血液中的水分和葡萄糖水平，改善微小血管功能。
+3. 尿酸盐剂（如布洛芬）：缓解痛楚、炎症等周围神经病变的症状。
+
+**管理建议**
+
+1. **药物调整**: 根据患者的HbA1c和周围神经病变的严重程度，调整药物剂量和类型，以维持稳定的血糖水平。
+2. **饮食控制**: 增强蛋白质和碳水化合物的摄入，为身体提供足够的能量和营养支持。
+3. **锻炼**: 建议患者进行 Gentle Exercise，如 Yoga 或 Pilates，帮助改善微小血管功能和血液流动性。
+4. **监测**: Regularly检查HbA1c、周围神经病变和其他指标，以及时调整治疗方案。</div>
+                    
+
+                    <div class="score-row"><span>有效性: 9.5</span> <span>安全性: 10.0</span></div>
+                </div>
+                
+                <div class="comp-card" style="--m-color: #F59E0B">
+                    <div style="font-weight: 800; color: #F59E0B; font-size: 15px; margin-bottom: 10px;">Qwen2</div>
+
+                    <div class="data-highlight" style="--m-color: #F59E0B;">
+                        9.2 ➔ <span>6.1</span> <small style="color:#94A3B8; font-size:12px;">%</small>
+                    </div>
+
+                    <div class="chart-box">
+                        <canvas class="bar-chart" data-base="9.2" data-post="6.1" data-color="#F59E0B"></canvas>
+                    </div>
+
+                    
+                    <div class="text-content" style="--m-color: #F59E0B; height: 150px;">患者HbA1c检测结果为9.2%，伴随双足麻木症状，建议采取中西医结合治疗，并针对多种病因进行综合诊断和个性化治疗方案。同时，强调早期预防措施，如定期血糖监测、控制饮食、适量运动等。在使用中药汤剂时，应避免药物过量或过快，以免导致副作用。对于急性疾病情况，建议立即就医，尽快进行针对性的医疗处理。
+
+针对患者双足麻木的症状，中医认为是气血不足，阳气偏旺的表现。建议结合中医学理论，加强饮食营养，补充充足气血，同时可以采用补血养血的中药进行调理，帮助改善症状。对于慢性疾病情况，应根据病因和体能状况，科学合理地配伍药物，预防疾病加重或转为慢性状态。患者要定期复查HbA1c结果，以监测治疗效果和动态调整用药方案。
+
+最后，提醒患者在康复过程中要注意饮食、休息和个人卫生，保持良好的生活习惯，以及按照医生的建议正确服药和锻炼身体，才能尽快康复。</div>
+                    
+
+                    <div class="score-row"><span>有效性: 9.5</span> <span>安全性: 9.7</span></div>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+
+    <script>
+        window.onload = function() {
+            document.querySelectorAll('.bar-chart').forEach(el => {
+                const ctx = el.getContext('2d');
+                const base = parseFloat(el.getAttribute('data-base'));
+                const post = parseFloat(el.getAttribute('data-post'));
+                const color = el.getAttribute('data-color');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['干预前', '干预后'],
+                        datasets: [{ data: [base, post], backgroundColor: ['#E2E8F0', color], borderRadius: 6 }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { display: false }, tooltip: { bodyFont: { size: 14 } } },
+                        scales: { y: { min: 4.0, grid: { color: 'rgba(0,0,0,0.05)' } }, x: { grid: { display: false } } }
+                    }
+                });
+            });
+        }
+    </script>
+</body>
+</html>

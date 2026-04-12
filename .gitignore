@@ -1,0 +1,22 @@
+# Python 运行时文件
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+
+# IDE 配置文件
+.idea/
+.vscode/
+.DS_Store
+
+# 庞大数据集与敏感配置（坚决不传）
+data/metabonet_refs/*
+data/raw_synthea/*
+*.parquet
+.env
+config_local.py
+
+# 忽略 Output 下所有的中间表格和图片
+output/**/*.csv
+output/**/*.png

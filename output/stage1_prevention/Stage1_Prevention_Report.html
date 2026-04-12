@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>DiaTwin Stage 1 - 预防推演</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { --primary: #30A5A7; --dark: #1E293B; --bg: #F4F8F9; --gold: #FFD93D; --accent: #FF4757; }
+        body { font-family: 'PingFang SC', sans-serif; background: var(--bg); padding: 30px; color: var(--dark); margin: 0; }
+        .container { max-width: 1550px; margin: 0 auto; }
+        ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+
+        /* 顶部看板 */
+        .top-banner { background: linear-gradient(135deg, #1E293B, #0F172A); color: white; padding: 35px 40px; border-radius: 24px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); }
+        .stat-item { background: rgba(255,255,255,0.1); padding: 15px 30px; border-radius: 16px; text-align: center; border: 1px solid rgba(255,255,255,0.2); }
+
+        .patient-card { background: white; padding: 35px; border-radius: 30px; margin-bottom: 50px; box-shadow: 0 8px 25px rgba(0,0,0,0.03); }
+        .p-header { display: flex; align-items: center; margin-bottom: 30px; background: #F8FAFC; padding: 18px 25px; border-radius: 16px; border-left: 6px solid var(--primary); }
+
+        /* 核心自研模型 */
+        .hero-section { background: #FFFEF9; border-radius: 24px; padding: 30px; border: 2px solid var(--gold); position: relative; display: grid; grid-template-columns: 1.5fr 2fr; gap: 40px; margin-bottom: 30px; }
+        .hero-tag { position: absolute; top: -16px; left: 35px; background: var(--accent); color: white; padding: 6px 20px; border-radius: 8px; font-weight: bold; font-size: 13px; }
+
+        /* 竞品网格 */
+        .comp-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; align-items: stretch; }
+        .comp-card { background: white; border-radius: 20px; padding: 20px; border: 1px solid #E2E8F0; display: flex; flex-direction: column; transition: transform 0.3s; height: 100%; box-sizing: border-box; }
+        .comp-card:hover { transform: translateY(-5px); box-shadow: 0 12px 20px rgba(0,0,0,0.05); border-color: var(--m-color); }
+
+        /* 🌟 数据高亮展示区 (置于图表上方) */
+        .data-highlight { text-align: center; font-size: 22px; font-weight: 900; margin-bottom: 5px; color: var(--dark); }
+        .data-highlight span { color: var(--m-color); }
+
+        /* 文本和聊天窗口容器 */
+        .text-content { font-size: 13.5px; line-height: 1.7; height: 150px; overflow-y: auto; background: #F8FAFC; padding: 15px; border-radius: 12px; margin-bottom: 15px; border-top: 4px solid var(--m-color); text-align: justify; flex-shrink: 0; }
+
+        .ant-sim { background: #F1F5F9; border-radius: 12px; height: 150px; padding: 15px; font-size: 12px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; border-top: 4px solid #10B981; overflow-y: auto; flex-shrink: 0; }
+        .bubble { padding: 8px 12px; border-radius: 12px; max-width: 85%; line-height: 1.5; }
+        .b-user { background: #10B981; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
+        .b-bot { background: white; align-self: flex-start; border: 1px solid #E2E8F0; border-bottom-left-radius: 2px; }
+
+        .chart-box { height: 120px; margin-bottom: 15px; flex-shrink: 0; }
+        canvas { width: 100% !important; height: 100% !important; }
+        .score-row { margin-top: auto; display: flex; justify-content: space-between; font-size: 11px; font-weight: bold; color: #64748B; padding-top: 15px; border-top: 1px dashed #E2E8F0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="top-banner">
+            <div><h1 style="margin:0; color:#30A5A7;">DiaTwin <span style="color:white">Prevention</span></h1><p style="margin:8px 0 0 0; opacity:0.8;">Stage 1: 生活方式干预与空腹血糖控制推演 (FPG Target)</p></div>
+            <div style="display:flex; gap:20px;">
+                <div class="stat-item">基线 FPG<b style="display:block; font-size:28px; color:#FF4757; margin-top:5px;">5.8</b></div>
+                <div class="stat-item">预测 FPG<b style="display:block; font-size:28px; color:#30A5A7; margin-top:5px;">4.9</b></div>
+            </div>
+        </div>
+
+        
+        <div class="patient-card">
+            <div class="p-header">
+                <span style="background:var(--primary); color:white; padding:4px 12px; border-radius:8px; font-size:13px; font-weight:bold; margin-right:15px;">高依从/中风险</span>
+                <span style="font-size: 18px; font-weight: 800; color: var(--dark); margin-right: 30px;">病例: DIA-P-9231</span>
+                <span style="font-size: 15px; color: #64748B;">BMI: <b style="color:var(--dark)">29.8</b> &nbsp;|&nbsp; 依从性(c): <b style="color:var(--primary)">0.83</b></span>
+            </div>
+
+            
+            <div class="hero-section">
+                <div class="hero-tag">TEAM CHOICE: TCM-DMX</div>
+                <div style="display: flex; flex-direction: column; justify-content: center;">
+                    <div class="data-highlight" style="--m-color: #30A5A7; text-align: left; font-size: 28px;">
+                        FPG 轨迹: 6.4 ➔ <span>5.5</span> <small style="color:#94A3B8; font-size:14px;">mmol/L</small>
+                    </div>
+                    <div class="chart-box" style="height: 160px;">
+                        <canvas class="line-chart" data-traj="6.4,6.2,5.9,5.5" data-min="5.0" data-color="#30A5A7" data-hero="true"></canvas>
+                    </div>
+                </div>
+                <div style="display: flex; flex-direction: column;">
+                    <h3 style="color:var(--primary); margin:0 0 10px 0;">TCM-DMX 深度干预处方</h3>
+                    <div class="text-content" style="--m-color: var(--gold); height: 180px; margin-bottom: 0;">根据空腹血糖6.4 mmol/L（接近糖尿病前期），结合中西医视角，建议如下：
+
+**饮食管理**  
+• 采用低GI饮食：主食替换为燕麦、糙米等全谷物，搭配绿叶蔬菜、优质蛋白（鱼、豆类）。  
+• 控制碳水总量：每餐主食≤1拳，避免精制糖及甜饮。  
+• 中医食疗：山药粥健脾益气，苦瓜炒蛋清热降糖。  
+
+**运动方案**  
+• 每日30分钟快走/游泳，每周5次，配合每日10分钟踮脚尖（刺激涌泉穴）。  
+• 运动后监测血糖，避免低血糖。  
+
+**中医调理**  
+• 艾灸足三里、三阴交，每周3次，调节脾胃运化。  
+• 晨起饮用陈皮茯苓茶（理气祛湿）。  
+
+**监测与随访**  
+• 每月检测空腹+餐后2小时血糖，连续3个月。  
+• 若糖化血红蛋白≥5.7%，需内分泌科就诊。  
+
+**禁忌提醒**  
+• 避免熬夜（23点前入睡），忌烟酒，减少久坐。  
+
+注：此建议为预防干预，若出现口渴、多尿等症状，立即就医。</div>
+                    <div class="score-row" style="border:none; padding-top:10px;"><span>有效性评估: 9.0</span> <span>安全性评估: 6.0</span></div>
+                </div>
+            </div>
+
+            <div class="comp-grid">
+                
+                
+                
+                
+                <div class="comp-card" style="--m-color: #10B981">
+                    <div style="font-weight: 800; color: #10B981; font-size: 15px; margin-bottom: 10px;">Ant Medical</div>
+
+                    <div class="data-highlight" style="--m-color: #10B981;">
+                        6.4 ➔ <span>5.5</span>
+                    </div>
+
+                    <div class="chart-box">
+                        <canvas class="line-chart" data-traj="6.4,6.2,5.9,5.5" data-min="5.0" data-color="#10B981" data-hero="false"></canvas>
+                    </div>
+
+                    
+                    <div class="ant-sim">
+                        <div class="bubble b-user">请求临床预防建议</div>
+                        <div class="bubble b-bot">【Ant Medical 智能决策中心】AI 诊断：患者当前存在显著的糖代谢失衡。建议启动全周期数字化干预：
+1. 动态控糖 (Diet)：采用限制性进食 (TRE) 策略，碳水化合物优选全谷物，日均摄入严格控制；
+2. 运动处方 (Exercise)：建议每周累计至少150分钟有氧运动，目标心率控制在 (220-年龄)×65% 区间；
+3. 闭环监测：即日起接入健康档案，连续打卡动态血糖，若持续异动将自动触发人工介入机制。</div>
+                    </div>
+                    
+
+                    <div class="score-row"><span>有效性: 10.0</span> <span>安全性: 5.0</span></div>
+                </div>
+                
+                
+                
+                <div class="comp-card" style="--m-color: #3B82F6">
+                    <div style="font-weight: 800; color: #3B82F6; font-size: 15px; margin-bottom: 10px;">Doubao</div>
+
+                    <div class="data-highlight" style="--m-color: #3B82F6;">
+                        6.4 ➔ <span>5.4</span>
+                    </div>
+
+                    <div class="chart-box">
+                        <canvas class="line-chart" data-traj="6.4,6.1,5.8,5.4" data-min="4.9" data-color="#3B82F6" data-hero="false"></canvas>
+                    </div>
+
+                    
+                    <div class="text-content" style="--m-color: #3B82F6;">**生活方式干预建议**
+饮食上控制总热量，优先选择全谷物、杂豆等低GI食物，减少精制糖、油炸食品摄入，每日膳食纤维≥25g，三餐定时定量。每周累计150分钟中等强度有氧运动（快走、慢跑等），搭配2-3次抗阻训练，避免久坐。将BMI控制在18.5-23.9kg/㎡，每月监测空腹血糖，每3个月复查OGTT，同时戒烟限酒、规律作息。</div>
+                    
+
+                    <div class="score-row"><span>有效性: 7.0</span> <span>安全性: 9.0</span></div>
+                </div>
+                
+                
+                
+                <div class="comp-card" style="--m-color: #8B5CF6">
+                    <div style="font-weight: 800; color: #8B5CF6; font-size: 15px; margin-bottom: 10px;">Llama-3.2</div>
+
+                    <div class="data-highlight" style="--m-color: #8B5CF6;">
+                        6.4 ➔ <span>5.1</span>
+                    </div>
+
+                    <div class="chart-box">
+                        <canvas class="line-chart" data-traj="6.4,6.1,5.7,5.1" data-min="4.6" data-color="#8B5CF6" data-hero="false"></canvas>
+                    </div>
+
+                    
+                    <div class="text-content" style="--m-color: #8B5CF6;">根据患者当前数据， recommends：
+
+1.  **饮食**: 每天 consume 5-7个高quality蛋白质摄入量，结合合适的碳水化合物和脂肪来源。
+2.  **锻炼**: 每日进行30分钟 moderate-intensity aerobic Exercise和3次/周中等量强度的深呼吸 exercises，注意避免 strenuous Exercise导致的心脏负担。
+3.  **睡眠**: 每天每个人的建议 slept 7-9小时，注意减少屏幕前使用时间。</div>
+                    
+
+                    <div class="score-row"><span>有效性: 10.0</span> <span>安全性: 10.0</span></div>
+                </div>
+                
+                
+                
+                <div class="comp-card" style="--m-color: #F59E0B">
+                    <div style="font-weight: 800; color: #F59E0B; font-size: 15px; margin-bottom: 10px;">Qwen2</div>
+
+                    <div class="data-highlight" style="--m-color: #F59E0B;">
+                        6.4 ➔ <span>5.2</span>
+                    </div>
+
+                    <div class="chart-box">
+                        <canvas class="line-chart" data-traj="6.4,6.1,5.7,5.2" data-min="4.7" data-color="#F59E0B" data-hero="false"></canvas>
+                    </div>
+
+                    
+                    <div class="text-content" style="--m-color: #F59E0B;">针对患者的空腹血糖值为6.4，我建议患者进行以下综合生活方式干预：
+
+1. **限制饮食**：患者应避免高糖、高脂肪、高盐的食物，尽量减少油腻食品和油炸食品的摄入。
+2. **增加蔬菜水果摄取**：保持充足的蔬菜和水果摄入量，这些食物富含纤维素，可以帮助控制血糖水平。
+3. **规律运动**：定期进行适量的体育锻炼，如散步、慢跑等，以帮助调节血糖水平。
+4. **定时定量饮水**：患者应避免过量饮水，如果需要补充水分时，可尝试喝含有电解质的饮料，如运动饮料。
+5. **注意饮食时间**：控制三餐比例，减少午睡时间，尽量让早餐在早晨7点左右准备完毕后食用，晚餐在晚上8点前做好准备。
+6. **戒烟限酒**：烟草中的尼古丁、有害物质等会对血糖水平产生负面影响。
+7. **睡眠充足**：保证充足的睡眠有助于调节身体的内分泌系统和胰腺功能。
+
+请根据患者的具体情况调整上述建议。</div>
+                    
+
+                    <div class="score-row"><span>有效性: 9.5</span> <span>安全性: 9.0</span></div>
+                </div>
+                
+                
+            </div>
+        </div>
+        
+        <div class="patient-card">
+            <div class="p-header">
+                <span style="background:var(--primary); color:white; padding:4px 12px; border-radius:8px; font-size:13px; font-weight:bold; margin-right:15px;">低依从/轻风险</span>
+                <span style="font-size: 18px; font-weight: 800; color: var(--dark); margin-right: 30px;">病例: DIA-P-9038</span>
+                <span style="font-size: 15px; color: #64748B;">BMI: <b style="color:var(--dark)">25.2</b> &nbsp;|&nbsp; 依从性(c): <b style="color:var(--primary)">0.56</b></span>
+            </div>
+
+            
+            <div class="hero-section">
+                <div class="hero-tag">TEAM CHOICE: TCM-DMX</div>
+                <div style="display: flex; flex-direction: column; justify-content: center;">
+                    <div class="data-highlight" style="--m-color: #30A5A7; text-align: left; font-size: 28px;">
+                        FPG 轨迹: 5.9 ➔ <span>5.2</span> <small style="color:#94A3B8; font-size:14px;">mmol/L</small>
+                    </div>
+                    <div class="chart-box" style="height: 160px;">
+                        <canvas class="line-chart" data-traj="5.9,5.7,5.5,5.2" data-min="4.7" data-color="#30A5A7" data-hero="true"></canvas>
+                    </div>
+                </div>
+                <div style="display: flex; flex-direction: column;">
+                    <h3 style="color:var(--primary); margin:0 0 10px 0;">TCM-DMX 深度干预处方</h3>
+                    <div class="text-content" style="--m-color: var(--gold); height: 180px; margin-bottom: 0;">根据空腹血糖5.9 mmol/L（接近糖尿病前期），结合中西医视角，建议如下：
+
+**饮食管理**  
+• 采用低GI主食（燕麦、糙米），搭配绿叶蔬菜、优质蛋白（鱼、豆类），每日膳食纤维≥25g。  
+• 中医建议：晨起空腹饮温水300ml，晚餐后1小时顺时针揉腹5分钟助运化。  
+
+**运动方案**  
+• 每日快走40分钟（心率维持在110-130次/分），每周3次抗阻训练（弹力带/自重训练）。  
+• 中医导引：练习八段锦「调理脾胃须单举」，每日早晚各8次。  
+
+**监测与预警**  
+• 连续7天记录动态血糖（餐后2小时目标≤7.8mmol/L）。  
+• 若出现口干加重、夜间尿频＞2次/晚，需立即检测糖化血红蛋白。  
+
+**中医调理**  
+• 茶饮方：葛根6g+山楂3g+陈皮3g，沸水冲泡代茶（脾胃虚寒者加生姜2片）。  
+• 足浴方：艾叶15g+红花10g煮水泡脚15分钟，促进下肢血液循环。  
+
+**禁忌提醒**  
+• 忌食精制糖及反式脂肪酸（如糕点、油炸食品），避免餐后立即平卧。  
+
+注：建议3个月后复查OGTT试验，若空腹血糖持续≥6.1mmol/L，需内分泌科就诊。</div>
+                    <div class="score-row" style="border:none; padding-top:10px;"><span>有效性评估: 9.0</span> <span>安全性评估: 8.0</span></div>
+                </div>
+            </div>
+
+            <div class="comp-grid">
+                
+                
+                
+                
+                <div class="comp-card" style="--m-color: #10B981">
+                    <div style="font-weight: 800; color: #10B981; font-size: 15px; margin-bottom: 10px;">Ant Medical</div>
+
+                    <div class="data-highlight" style="--m-color: #10B981;">
+                        5.9 ➔ <span>5.2</span>
+                    </div>
+
+                    <div class="chart-box">
+                        <canvas class="line-chart" data-traj="5.9,5.7,5.5,5.2" data-min="4.7" data-color="#10B981" data-hero="false"></canvas>
+                    </div>
+
+                    
+                    <div class="ant-sim">
+                        <div class="bubble b-user">请求临床预防建议</div>
+                        <div class="bubble b-bot">【Ant Medical 智能决策中心】AI 诊断：患者当前存在显著的糖代谢失衡。建议启动全周期数字化干预：
+1. 动态控糖 (Diet)：采用限制性进食 (TRE) 策略，碳水化合物优选全谷物，日均摄入严格控制；
+2. 运动处方 (Exercise)：建议每周累计至少150分钟有氧运动，目标心率控制在 (220-年龄)×65% 区间；
+3. 闭环监测：即日起接入健康档案，连续打卡动态血糖，若持续异动将自动触发人工介入机制。</div>
+                    </div>
+                    
+
+                    <div class="score-row"><span>有效性: 8.0</span> <span>安全性: 9.0</span></div>
+                </div>
+                
+                
+                
+                <div class="comp-card" style="--m-color: #3B82F6">
+                    <div style="font-weight: 800; color: #3B82F6; font-size: 15px; margin-bottom: 10px;">Doubao</div>
+
+                    <div class="data-highlight" style="--m-color: #3B82F6;">
+                        5.9 ➔ <span>5.2</span>
+                    </div>
+
+                    <div class="chart-box">
+                        <canvas class="line-chart" data-traj="5.9,5.7,5.5,5.2" data-min="4.7" data-color="#3B82F6" data-hero="false"></canvas>
+                    </div>
+
+                    
+                    <div class="text-content" style="--m-color: #3B82F6;">【综合生活方式干预建议】
+1. 饮食：减少精制糖、高脂食物摄入，主食1/3替换为全谷物，多吃绿叶菜，三餐定时定量，控制总热量；
+2. 运动：每周累计150分钟中等强度有氧运动（快走、慢跑等），搭配2次抗阻训练；
+3. 习惯：戒烟限酒，避免熬夜，超重者需减重5%-7%；
+4. 监测：每3个月复查空腹及餐后2小时血糖，必要时行糖耐量试验。</div>
+                    
+
+                    <div class="score-row"><span>有效性: 9.5</span> <span>安全性: 8.0</span></div>
+                </div>
+                
+                
+                
+                <div class="comp-card" style="--m-color: #8B5CF6">
+                    <div style="font-weight: 800; color: #8B5CF6; font-size: 15px; margin-bottom: 10px;">Llama-3.2</div>
+
+                    <div class="data-highlight" style="--m-color: #8B5CF6;">
+                        5.9 ➔ <span>5.2</span>
+                    </div>
+
+                    <div class="chart-box">
+                        <canvas class="line-chart" data-traj="5.9,5.7,5.5,5.2" data-min="4.7" data-color="#8B5CF6" data-hero="false"></canvas>
+                    </div>
+
+                    
+                    <div class="text-content" style="--m-color: #8B5CF6;">患者空腹血糖升高（5.9mmol/L），应建议进行以下综合生活方式干预：
+
+1.  **饮食**：每天减少碳水化合物摄入，增加蛋白质和Healthy脂肪的摄入量。
+2.  **PhysicalActivity**：每周至少进行15分钟的 moderate Physical Activity（如 brisk Walking），包括 strength Training和 flexibility Exercises。
+3.  **睡眠**：每晚8-10小时 Sleep。
+4.  ** stress Management**：进行Regular Meditation或Yoga来降低压力水平。</div>
+                    
+
+                    <div class="score-row"><span>有效性: 8.0</span> <span>安全性: 9.0</span></div>
+                </div>
+                
+                
+                
+                <div class="comp-card" style="--m-color: #F59E0B">
+                    <div style="font-weight: 800; color: #F59E0B; font-size: 15px; margin-bottom: 10px;">Qwen2</div>
+
+                    <div class="data-highlight" style="--m-color: #F59E0B;">
+                        5.9 ➔ <span>5.2</span>
+                    </div>
+
+                    <div class="chart-box">
+                        <canvas class="line-chart" data-traj="5.9,5.7,5.5,5.2" data-min="4.7" data-color="#F59E0B" data-hero="false"></canvas>
+                    </div>
+
+                    
+                    <div class="text-content" style="--m-color: #F59E0B;">在治疗空腹血糖患者时，100字以上的大标题可以省略，但具体的个性化建议和方法需要根据患者的个人情况以及医生的经验进行制定。比如：建议患者多喝水、多吃蔬菜水果、避免过度饮酒、避免暴饮暴食等习惯，并且在日常生活中注意控制体重、保持良好的生活习惯，如保证充足的睡眠、合理膳食、适量运动等。治疗期间还需要定期监测血糖和血压，必要时需要进一步检查，以达到理想的治疗效果。</div>
+                    
+
+                    <div class="score-row"><span>有效性: 9.0</span> <span>安全性: 8.0</span></div>
+                </div>
+                
+                
+            </div>
+        </div>
+        
+        <div class="patient-card">
+            <div class="p-header">
+                <span style="background:var(--primary); color:white; padding:4px 12px; border-radius:8px; font-size:13px; font-weight:bold; margin-right:15px;">中依从/临界风险</span>
+                <span style="font-size: 18px; font-weight: 800; color: var(--dark); margin-right: 30px;">病例: DIA-P-7793</span>
+                <span style="font-size: 15px; color: #64748B;">BMI: <b style="color:var(--dark)">29.7</b> &nbsp;|&nbsp; 依从性(c): <b style="color:var(--primary)">0.76</b></span>
+            </div>
+
+            
+            <div class="hero-section">
+                <div class="hero-tag">TEAM CHOICE: TCM-DMX</div>
+                <div style="display: flex; flex-direction: column; justify-content: center;">
+                    <div class="data-highlight" style="--m-color: #30A5A7; text-align: left; font-size: 28px;">
+                        FPG 轨迹: 5.8 ➔ <span>4.6</span> <small style="color:#94A3B8; font-size:14px;">mmol/L</small>
+                    </div>
+                    <div class="chart-box" style="height: 160px;">
+                        <canvas class="line-chart" data-traj="5.8,5.5,5.1,4.6" data-min="4.1" data-color="#30A5A7" data-hero="true"></canvas>
+                    </div>
+                </div>
+                <div style="display: flex; flex-direction: column;">
+                    <h3 style="color:var(--primary); margin:0 0 10px 0;">TCM-DMX 深度干预处方</h3>
+                    <div class="text-content" style="--m-color: var(--gold); height: 180px; margin-bottom: 0;">根据您的空腹血糖值5.8 mmol/L（接近正常上限），结合中西医视角，建议如下：
+
+**饮食管理**  
+• 采用「低GI+高纤维」模式：主食替换为燕麦、糙米等全谷物，搭配绿叶蔬菜、豆类；减少精制糖及甜食摄入。  
+• 中医食疗：早餐可加山药小米粥（健脾益气），晚餐后饮用陈皮普洱茶（助运化）。  
+
+**运动方案**  
+• 每日30分钟「间歇性有氧」：快走10分钟+慢跑5分钟交替，配合八段锦「双手托天理三焦」式（改善代谢循环）。  
+• 每周2次抗阻训练（弹力带深蹲、靠墙静蹲），增强肌肉对葡萄糖摄取。  
+
+**中医调理**  
+• 足三里、三阴交穴位按压（每日早晚各3分钟），调节脾胃功能。  
+• 春夏可饮菊花决明子茶（清肝火），秋冬用黄芪枸杞茶（补气滋阴）。  
+
+**监测与预警**  
+• 连续7天记录血糖日记（含餐后2小时值），若出现口渴、乏力加重或尿频，立即检测随机血糖并就诊。  
+• 家族糖尿病史者建议每年查糖化血红蛋白（HbA1c<6.5%为安全阈值）。  
+
+注：以上建议需结合具体体质调整，建议面诊中医师辨证后制定个性化方案。</div>
+                    <div class="score-row" style="border:none; padding-top:10px;"><span>有效性评估: 10.0</span> <span>安全性评估: 10.0</span></div>
+                </div>
+            </div>
+
+            <div class="comp-grid">
+                
+                
+                
+                
+                <div class="comp-card" style="--m-color: #10B981">
+                    <div style="font-weight: 800; color: #10B981; font-size: 15px; margin-bottom: 10px;">Ant Medical</div>
+
+                    <div class="data-highlight" style="--m-color: #10B981;">
+                        5.8 ➔ <span>4.8</span>
+                    </div>
+
+                    <div class="chart-box">
+                        <canvas class="line-chart" data-traj="5.8,5.5,5.2,4.8" data-min="4.3" data-color="#10B981" data-hero="false"></canvas>
+                    </div>
+
+                    
+                    <div class="ant-sim">
+                        <div class="bubble b-user">请求临床预防建议</div>
+                        <div class="bubble b-bot">【Ant Medical 智能决策中心】AI 诊断：患者当前存在显著的糖代谢失衡。建议启动全周期数字化干预：
+1. 动态控糖 (Diet)：采用限制性进食 (TRE) 策略，碳水化合物优选全谷物，日均摄入严格控制；
+2. 运动处方 (Exercise)：建议每周累计至少150分钟有氧运动，目标心率控制在 (220-年龄)×65% 区间；
+3. 闭环监测：即日起接入健康档案，连续打卡动态血糖，若持续异动将自动触发人工介入机制。</div>
+                    </div>
+                    
+
+                    <div class="score-row"><span>有效性: 9.0</span> <span>安全性: 8.0</span></div>
+                </div>
+                
+                
+                
+                <div class="comp-card" style="--m-color: #3B82F6">
+                    <div style="font-weight: 800; color: #3B82F6; font-size: 15px; margin-bottom: 10px;">Doubao</div>
+
+                    <div class="data-highlight" style="--m-color: #3B82F6;">
+                        5.8 ➔ <span>4.8</span>
+                    </div>
+
+                    <div class="chart-box">
+                        <canvas class="line-chart" data-traj="5.8,5.5,5.2,4.8" data-min="4.3" data-color="#3B82F6" data-hero="false"></canvas>
+                    </div>
+
+                    
+                    <div class="text-content" style="--m-color: #3B82F6;">1. 饮食：减少精制米面、甜食摄入，全谷物占主食1/3以上，每日摄入300-500g绿叶菜，定时定量，避免暴饮暴食。
+2. 运动：每周累计150分钟中等强度有氧运动（快走、慢跑等），搭配2次抗阻训练，避免久坐。
+3. 体重：将BMI维持在18.5-23.9kg/㎡，男性腹围<90cm、女性<85cm。
+4. 监测与作息：每1-2周测1次空腹血糖，每3个月复查糖耐量，规律作息不熬夜。</div>
+                    
+
+                    <div class="score-row"><span>有效性: 9.0</span> <span>安全性: 9.0</span></div>
+                </div>
+                
+                
+                
+                <div class="comp-card" style="--m-color: #8B5CF6">
+                    <div style="font-weight: 800; color: #8B5CF6; font-size: 15px; margin-bottom: 10px;">Llama-3.2</div>
+
+                    <div class="data-highlight" style="--m-color: #8B5CF6;">
+                        5.8 ➔ <span>4.8</span>
+                    </div>
+
+                    <div class="chart-box">
+                        <canvas class="line-chart" data-traj="5.8,5.5,5.2,4.8" data-min="4.3" data-color="#8B5CF6" data-hero="false"></canvas>
+                    </div>
+
+                    
+                    <div class="text-content" style="--m-color: #8B5CF6;">根据患者当前数据，建议进行以下综合生活方式干预：
+
+1.  **饮食控制**：限制高糖和高脂肪摄入。减少碳水化合物的摄入量，特别是简单 sugars 和 refined grains。
+2.  **增加蛋白质和健康纤维摄入**： consumes proteins and fiber-rich foods, such as lean meats, fish, eggs, nuts, seeds, and whole grains.
+3.  **控制碳水化合物的摄入量**： limit sugary drinks, refined carbohydrates, and starchy vegetables like white potatoes.
+4.  **进行 Regular Exercise**： engage in at least 150 minutes of moderate-intensity aerobic exercise, or 75 minutes of vigorous-intensity aerobic exercise, or a combination of both per week.
+5.  **注意睡眠质量**： aim for 7-8 hours of sleep each night to help regulate blood sugar levels and insulin sensitivity.</div>
+                    
+
+                    <div class="score-row"><span>有效性: 8.5</span> <span>安全性: 9.0</span></div>
+                </div>
+                
+                
+                
+                <div class="comp-card" style="--m-color: #F59E0B">
+                    <div style="font-weight: 800; color: #F59E0B; font-size: 15px; margin-bottom: 10px;">Qwen2</div>
+
+                    <div class="data-highlight" style="--m-color: #F59E0B;">
+                        5.8 ➔ <span>4.8</span>
+                    </div>
+
+                    <div class="chart-box">
+                        <canvas class="line-chart" data-traj="5.8,5.5,5.2,4.8" data-min="4.3" data-color="#F59E0B" data-hero="false"></canvas>
+                    </div>
+
+                    
+                    <div class="text-content" style="--m-color: #F59E0B;">首先，请避免高糖和高脂肪食物，如炸鸡、薯片等；其次，限制饮酒，减少酒精摄入量；第三，在日常饮食中，多吃蔬菜水果，保持营养均衡；最后，定时定量饮水，注意补充水分，并多运动，尤其是有氧运动。以上建议仅供参考，具体治疗请咨询专业医生。</div>
+                    
+
+                    <div class="score-row"><span>有效性: 9.0</span> <span>安全性: 8.0</span></div>
+                </div>
+                
+                
+            </div>
+        </div>
+        
+        <div class="patient-card">
+            <div class="p-header">
+                <span style="background:var(--primary); color:white; padding:4px 12px; border-radius:8px; font-size:13px; font-weight:bold; margin-right:15px;">极高依从/高风险</span>
+                <span style="font-size: 18px; font-weight: 800; color: var(--dark); margin-right: 30px;">病例: DIA-P-1626</span>
+                <span style="font-size: 15px; color: #64748B;">BMI: <b style="color:var(--dark)">28.9</b> &nbsp;|&nbsp; 依从性(c): <b style="color:var(--primary)">0.91</b></span>
+            </div>
+
+            
+            <div class="hero-section">
+                <div class="hero-tag">TEAM CHOICE: TCM-DMX</div>
+                <div style="display: flex; flex-direction: column; justify-content: center;">
+                    <div class="data-highlight" style="--m-color: #30A5A7; text-align: left; font-size: 28px;">
+                        FPG 轨迹: 6.7 ➔ <span>5.5</span> <small style="color:#94A3B8; font-size:14px;">mmol/L</small>
+                    </div>
+                    <div class="chart-box" style="height: 160px;">
+                        <canvas class="line-chart" data-traj="6.7,6.4,6.0,5.5" data-min="5.0" data-color="#30A5A7" data-hero="true"></canvas>
+                    </div>
+                </div>
+                <div style="display: flex; flex-direction: column;">
+                    <h3 style="color:var(--primary); margin:0 0 10px 0;">TCM-DMX 深度干预处方</h3>
+                    <div class="text-content" style="--m-color: var(--gold); height: 180px; margin-bottom: 0;">根据您的空腹血糖值6.7 mmol/L（接近糖尿病前期），以下是综合生活方式干预建议：
+
+### 饮食管理
+1. **低升糖指数（GI）饮食**：选择全谷物、杂豆类、绿叶蔬菜，减少精制米面、甜食及含糖饮料摄入。
+2. **控制碳水化合物总量**：每餐主食不超过1拳头（约50g生重），搭配优质蛋白（鱼、鸡胸肉、豆腐）及健康脂肪（坚果、橄榄油）。
+3. **定时定量进餐**：每日3餐+2次加餐（如无糖酸奶/水果），避免长时间空腹引发血糖波动。
+
+### 运动干预
+1. **每周150分钟中等强度运动**：快走、游泳、骑自行车等，每次持续30分钟以上。
+2. **抗阻训练**：每周2-3次力量训练（深蹲、俯卧撑），增强肌肉对葡萄糖的摄取。
+3. **餐后活动**：餐后散步30分钟，促进血糖平稳下降。
+
+### 生活习惯调整
+1. **体重管理**：BMI控制在18.5-23.9，腰围男性<90cm、女性<85cm。
+2. **睡眠充足**：保证7-8小时高质量睡眠，避免熬夜（皮质醇升高影响胰岛素敏感性）。
+3. **戒烟限酒**：酒精摄入≤1份/日（男性25g酒精，女性15g酒精）。
+
+### 监测与随访
+1. **自我监测**：每周至少3天检测空腹及餐后2小时血糖。
+2. **定期复查**：每3个月查糖化血红蛋白（HbA1c），每年筛查眼底、尿微量白蛋白等并发症。
+
+**注意**：若出现口渴加重、乏力明显、视力骤降等症状，需立即就诊。建议在内分泌科医生指导下制定个体化方案，必要时配合二甲双胍等药物干预。
+
+（注：以上建议需结合具体年龄、性别、病史等调整，仅供参考。）</div>
+                    <div class="score-row" style="border:none; padding-top:10px;"><span>有效性评估: 9.5</span> <span>安全性评估: 8.2</span></div>
+                </div>
+            </div>
+
+            <div class="comp-grid">
+                
+                
+                
+                
+                <div class="comp-card" style="--m-color: #10B981">
+                    <div style="font-weight: 800; color: #10B981; font-size: 15px; margin-bottom: 10px;">Ant Medical</div>
+
+                    <div class="data-highlight" style="--m-color: #10B981;">
+                        6.7 ➔ <span>5.4</span>
+                    </div>
+
+                    <div class="chart-box">
+                        <canvas class="line-chart" data-traj="6.7,6.3,5.9,5.4" data-min="4.9" data-color="#10B981" data-hero="false"></canvas>
+                    </div>
+
+                    
+                    <div class="ant-sim">
+                        <div class="bubble b-user">请求临床预防建议</div>
+                        <div class="bubble b-bot">【Ant Medical 智能决策中心】AI 诊断：患者当前存在显著的糖代谢失衡。建议启动全周期数字化干预：
+1. 动态控糖 (Diet)：采用限制性进食 (TRE) 策略，碳水化合物优选全谷物，日均摄入严格控制；
+2. 运动处方 (Exercise)：建议每周累计至少150分钟有氧运动，目标心率控制在 (220-年龄)×65% 区间；
+3. 闭环监测：即日起接入健康档案，连续打卡动态血糖，若持续异动将自动触发人工介入机制。</div>
+                    </div>
+                    
+
+                    <div class="score-row"><span>有效性: 9.8</span> <span>安全性: 9.5</span></div>
+                </div>
+                
+                
+                
+                <div class="comp-card" style="--m-color: #3B82F6">
+                    <div style="font-weight: 800; color: #3B82F6; font-size: 15px; margin-bottom: 10px;">Doubao</div>
+
+                    <div class="data-highlight" style="--m-color: #3B82F6;">
+                        6.7 ➔ <span>5.5</span>
+                    </div>
+
+                    <div class="chart-box">
+                        <canvas class="line-chart" data-traj="6.7,6.4,6.0,5.5" data-min="5.0" data-color="#3B82F6" data-hero="false"></canvas>
+                    </div>
+
+                    
+                    <div class="text-content" style="--m-color: #3B82F6;">1. **饮食**：每日控制总热量，主食粗细搭配（全谷物占1/3以上），禁用精制糖、油炸食品，多摄入绿叶蔬菜与优质蛋白（鱼、蛋、豆制品），三餐定时定量，避免暴饮暴食。
+2. **运动**：每周累计150分钟中等强度有氧运动（快走、慢跑、游泳等），搭配2-3次抗阻训练（如哑铃、靠墙静蹲），避免久坐，每小时起身活动5-10分钟。
+3. **体重管理**：将BMI控制在18.5-23.9kg/㎡，男性腰围＜90cm，女性＜85cm，每月减重0.5-1kg为宜。
+4. **监测与作息**：每周监测2-3次空腹血糖，每3-6个月复查口服葡萄糖耐量试验；规律作息，保证7-8小时睡眠，戒烟限酒，避免熬夜。</div>
+                    
+
+                    <div class="score-row"><span>有效性: 9.5</span> <span>安全性: 8.2</span></div>
+                </div>
+                
+                
+                
+                <div class="comp-card" style="--m-color: #8B5CF6">
+                    <div style="font-weight: 800; color: #8B5CF6; font-size: 15px; margin-bottom: 10px;">Llama-3.2</div>
+
+                    <div class="data-highlight" style="--m-color: #8B5CF6;">
+                        6.7 ➔ <span>5.5</span>
+                    </div>
+
+                    <div class="chart-box">
+                        <canvas class="line-chart" data-traj="6.7,6.4,6.0,5.5" data-min="5.0" data-color="#8B5CF6" data-hero="false"></canvas>
+                    </div>
+
+                    
+                    <div class="text-content" style="--m-color: #8B5CF6;">患者空腹血糖为6.7。根据此结果，我们建议：
+
+1.  **增加体育活动**: 每周进行至少30分钟的轻强度 Exercise，以改善心血管健康。
+2.  **改善饮食习惯**: 减少摄入碳水化合物和脂肪，选择低糖、高纤维的食物，如蔬菜、豆类和纤维含量丰富的食物。
+3.  **控制压力**: 运用 relaxation techniques，例如深呼吸或 Yoga，以降低 stress.
+4.  **睡眠质量**: Establish规则 sleep schedule， aim for 7-8 hours per night。</div>
+                    
+
+                    <div class="score-row"><span>有效性: 9.6</span> <span>安全性: 8.4</span></div>
+                </div>
+                
+                
+                
+                <div class="comp-card" style="--m-color: #F59E0B">
+                    <div style="font-weight: 800; color: #F59E0B; font-size: 15px; margin-bottom: 10px;">Qwen2</div>
+
+                    <div class="data-highlight" style="--m-color: #F59E0B;">
+                        6.7 ➔ <span>5.5</span>
+                    </div>
+
+                    <div class="chart-box">
+                        <canvas class="line-chart" data-traj="6.7,6.4,6.0,5.5" data-min="5.0" data-color="#F59E0B" data-hero="false"></canvas>
+                    </div>
+
+                    
+                    <div class="text-content" style="--m-color: #F59E0B;">在患者的日常生活中，我们应该注意饮食习惯，尽量避免高糖、高脂食物，并且适量进行运动和锻炼身体，以保持良好的健康状态。此外，我们还可以调整工作和生活的节奏，减少压力，保证充足的休息和睡眠时间，这些都是促进身体健康的重要方法。对于患者空腹血糖6.7的状况，我们需要特别关注饮食控制以及适当的运动量来达到更好的效果。建议患者在医生指导下，根据具体情况进行综合干预。</div>
+                    
+
+                    <div class="score-row"><span>有效性: 9.0</span> <span>安全性: 8.0</span></div>
+                </div>
+                
+                
+            </div>
+        </div>
+        
+    </div>
+
+    <script>
+        window.onload = function() {
+            document.querySelectorAll('.line-chart').forEach(function(el) {
+                var ctx = el.getContext('2d');
+                var traj = el.getAttribute('data-traj').split(',').map(Number);
+                var yMin = parseFloat(el.getAttribute('data-min'));
+                var color = el.getAttribute('data-color');
+                var isHero = el.getAttribute('data-hero') === 'true';
+
+                var gradient = ctx.createLinearGradient(0, 0, 0, 160);
+                gradient.addColorStop(0, color + (isHero ? '40' : '20'));
+                gradient.addColorStop(1, color + '00');
+
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['D0', 'D7', 'D14', 'D28'],
+                        datasets: [{
+                            data: traj, borderColor: color, borderWidth: isHero ? 4 : 2,
+                            tension: 0.35, fill: true, backgroundColor: gradient,
+                            pointBackgroundColor: '#fff', pointBorderColor: color,
+                            pointBorderWidth: 2, pointRadius: isHero ? 4 : 2
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { display: true, min: yMin, grid: { color: 'rgba(0,0,0,0.04)', drawBorder: false }, ticks: { font: { size: 10 } } },
+                            x: { grid: { display: false }, ticks: { font: { size: 11, weight: 'bold' } } }
+                        }
+                    }
+                });
+            });
+        }
+    </script>
+</body>
+</html>
