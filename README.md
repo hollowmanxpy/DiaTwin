@@ -12,7 +12,7 @@
 ![DiaTwin Dashboard](assets/demo_cover.jpg)
 
 DiaTwin (糖尿病数字孪生平台) 是一个基于真实世界数据 (RWD) 与多模态大模型 (Multi-LLM) 的全周期临床推演引擎。平台以团队自研的 **TCM-DMX (时珍中医数字化演进版)** 为核心，并行调度 Qwen2、Llama-3.2、Doubao 等先进大模型，通过动力学模拟，推演患者在不同干预路径下的代谢走向与临床获益。
-
+[output](output)
 ## 🌟 核心特性 (Key Features)
 
 * **🏥 HL7 FHIR 孪生数据扩增 (Digital Twin Generator):** 内置数据合成引擎，基于患者基线切片与代谢动力学漂移算法，自动化扩增连续30天的动态血糖与生活方式序列，并严格序列化为国际通用的 `HL7 FHIR R4` 标准 JSON 数据包。
